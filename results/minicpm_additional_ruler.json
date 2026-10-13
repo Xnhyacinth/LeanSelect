@@ -1,0 +1,122 @@
+[
+  {
+    "examples": 600,
+    "length": 32768,
+    "macro": 75.6301282051282,
+    "method": "XAttention scoring"
+  },
+  {
+    "examples": 600,
+    "length": 32768,
+    "macro": 88.37756410256411,
+    "method": "MInference scoring"
+  },
+  {
+    "examples": 600,
+    "length": 32768,
+    "macro": 44.621153846153845,
+    "method": "Recency"
+  },
+  {
+    "examples": 600,
+    "length": 65536,
+    "macro": 63.723076923076924,
+    "method": "XAttention scoring"
+  },
+  {
+    "examples": 600,
+    "length": 65536,
+    "macro": 84.8076923076923,
+    "method": "MInference scoring"
+  },
+  {
+    "examples": 600,
+    "length": 65536,
+    "macro": 33.925,
+    "method": "Recency"
+  },
+  {
+    "examples": 650,
+    "length": 98304,
+    "macro": 55.05897435897436,
+    "method": "XAttention scoring"
+  },
+  {
+    "examples": 650,
+    "length": 98304,
+    "macro": 77.42307692307692,
+    "method": "MInference scoring"
+  },
+  {
+    "examples": 650,
+    "length": 98304,
+    "macro": 31.823076923076922,
+    "method": "Recency"
+  },
+  {
+    "examples": 650,
+    "length": 131072,
+    "macro": 53.58974358974359,
+    "method": "XAttention scoring"
+  },
+  {
+    "examples": 650,
+    "length": 131072,
+    "macro": 76.47692307692307,
+    "method": "MInference scoring"
+  },
+  {
+    "examples": 650,
+    "length": 131072,
+    "macro": 31.653846153846153,
+    "method": "Recency"
+  },
+  {
+    "examples": 600,
+    "length": 32768,
+    "macro": 86.27307692307693,
+    "method": "Native sparse"
+  },
+  {
+    "examples": 600,
+    "length": 65536,
+    "macro": 76.8352564102564,
+    "method": "Native sparse"
+  },
+  {
+    "examples": 650,
+    "length": 98304,
+    "macro": 68.77435897435898,
+    "method": "Native sparse"
+  },
+  {
+    "examples": 650,
+    "length": 131072,
+    "macro": 68.31794871794872,
+    "method": "Native sparse"
+  },
+  {
+    "examples": 600,
+    "length": 32768,
+    "macro": 87.2326923076923,
+    "method": "LeanSelect"
+  },
+  {
+    "examples": 600,
+    "length": 65536,
+    "macro": 79.8852564102564,
+    "method": "LeanSelect"
+  },
+  {
+    "examples": 650,
+    "length": 98304,
+    "macro": 72.10512820512821,
+    "method": "LeanSelect"
+  },
+  {
+    "examples": 650,
+    "length": 131072,
+    "macro": 70.14871794871794,
+    "method": "LeanSelect"
+  }
+]

@@ -1,0 +1,3132 @@
+diff --git a/csrc/blockmask_to_uint64.cuh b/csrc/blockmask_to_uint64.cuh
+index 04b772c..b1452e4 100644
+--- a/csrc/blockmask_to_uint64.cuh
++++ b/csrc/blockmask_to_uint64.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cuda_runtime.h>
+ #include "utils.cuh"
+diff --git a/csrc/entry.cu b/csrc/entry.cu
+index 20fdb72..c283043 100644
+--- a/csrc/entry.cu
++++ b/csrc/entry.cu
+@@ -1,3 +1,8 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++// SPDX-License-Identifier: Apache-2.0
++
+ #include <torch/extension.h>
+ #include <ATen/ATen.h>
+ #include <c10/util/Optional.h>
+@@ -13,6 +18,7 @@
+ std::vector<at::Tensor> mha_fwd(at::Tensor &q, const at::Tensor &k, const at::Tensor &v, c10::optional<at::Tensor> &out_, c10::optional<at::Tensor> &alibi_slopes_, const float p_dropout, const float softmax_scale, bool is_causal, int window_size_left, int window_size_right, const float softcap, const bool return_softmax, c10::optional<at::Generator> gen_);
+ std::vector<at::Tensor> mha_varlen_fwd(at::Tensor &q, const at::Tensor &k, const at::Tensor &v, c10::optional<at::Tensor> &out_, const at::Tensor &cu_seqlens_q, const at::Tensor &cu_seqlens_k, c10::optional<at::Tensor> &seqused_k, c10::optional<const at::Tensor> &leftpad_k_, c10::optional<at::Tensor> &block_table_, c10::optional<at::Tensor> &alibi_slopes_, int max_seqlen_q, const int max_seqlen_k, const float p_dropout, const float softmax_scale, const bool zero_tensors, bool is_causal, int window_size_left, int window_size_right, const float softcap, const bool return_softmax, c10::optional<at::Generator> gen_, c10::optional<at::Tensor> &blockmask_);
+ std::vector<at::Tensor> mha_varlen_fwd_stage1(at::Tensor &q, const at::Tensor &k, const at::Tensor &v, c10::optional<at::Tensor> &out_, const at::Tensor &cu_seqlens_q, const at::Tensor &cu_seqlens_k, const at::Tensor &cu_seqlens_v, c10::optional<at::Tensor> &seqused_k, c10::optional<const at::Tensor> &leftpad_k_, c10::optional<at::Tensor> &block_table_, c10::optional<at::Tensor> &alibi_slopes_, int max_seqlen_q, const int max_seqlen_k, const float p_dropout, const float softmax_scale, const bool zero_tensors, bool is_causal, int window_size_left, int window_size_right, const float softcap, const bool return_softmax, c10::optional<at::Generator> gen_);
++std::vector<at::Tensor> mha_varlen_fwd_stage1_kl_teacher(at::Tensor &q, const at::Tensor &k, const at::Tensor &v, c10::optional<at::Tensor> &out_, const at::Tensor &cu_seqlens_q, const at::Tensor &cu_seqlens_k, const at::Tensor &cu_seqlens_v, c10::optional<at::Tensor> &seqused_k, c10::optional<const at::Tensor> &leftpad_k_, c10::optional<at::Tensor> &block_table_, c10::optional<at::Tensor> &alibi_slopes_, int max_seqlen_q, const int max_seqlen_k, const float p_dropout, const float softmax_scale, const bool zero_tensors, bool is_causal, int window_size_left, int window_size_right, const float softcap, const bool return_softmax, c10::optional<at::Generator> gen_, const int causal_stride, const int query_offset);
+ std::vector<at::Tensor> mha_bwd(const at::Tensor &dout, const at::Tensor &q, const at::Tensor &k, const at::Tensor &v, const at::Tensor &out, const at::Tensor &softmax_lse, c10::optional<at::Tensor> &dq_, c10::optional<at::Tensor> &dk_, c10::optional<at::Tensor> &dv_, c10::optional<at::Tensor> &alibi_slopes_, const float p_dropout, const float softmax_scale, const bool is_causal, int window_size_left, int window_size_right, const float softcap, const bool deterministic, c10::optional<at::Generator> gen_, c10::optional<at::Tensor> &rng_state);
+ std::vector<at::Tensor> mha_varlen_bwd(const at::Tensor &dout, const at::Tensor &q, const at::Tensor &k, const at::Tensor &v, const at::Tensor &out, const at::Tensor &softmax_lse, c10::optional<at::Tensor> &dq_, c10::optional<at::Tensor> &dk_, c10::optional<at::Tensor> &dv_, const at::Tensor &cu_seqlens_q, const at::Tensor &cu_seqlens_k, c10::optional<at::Tensor> &alibi_slopes_, const int max_seqlen_q, const int max_seqlen_k, const float p_dropout, const float softmax_scale, const bool zero_tensors, const bool is_causal, int window_size_left, int window_size_right, const float softcap, const bool deterministic, c10::optional<at::Tensor> &col_blockmask_, c10::optional<at::Generator> gen_, c10::optional<at::Tensor> &rng_state);
+ std::vector<at::Tensor> mha_fwd_kvcache(at::Tensor &q, const at::Tensor &kcache, const at::Tensor &vcache, c10::optional<const at::Tensor> &k_, c10::optional<const at::Tensor> &v_, c10::optional<const at::Tensor> &seqlens_k_, c10::optional<const at::Tensor> &rotary_cos_, c10::optional<const at::Tensor> &rotary_sin_, c10::optional<const at::Tensor> &cache_batch_idx_, c10::optional<const at::Tensor> &leftpad_k_, c10::optional<at::Tensor> &block_table_, c10::optional<at::Tensor> &alibi_slopes_, c10::optional<at::Tensor> &out_, const float softmax_scale, bool is_causal, int window_size_left, int window_size_right, const float softcap, bool is_rotary_interleaved, int num_splits, c10::optional<at::Tensor> &blockmask_);
+@@ -161,6 +167,7 @@ void max_pooling_1d_varlen(
+     int dtype,
+     int batch_size,
+     int num_heads,
++    int total_q,
+     int max_seqlen_q,
+     int max_seqlen_k,
+     int out_len,
+@@ -181,6 +188,7 @@ void max_pooling_1d_varlen(
+             reinterpret_cast<const int*>(cache_lens),
+             batch_size,
+             num_heads,
++            total_q,
+             max_seqlen_q,
+             max_seqlen_k,
+             out_len,
+@@ -209,7 +217,8 @@ PYBIND11_MODULE(C, m) {
+     m.def("fwd", &mha_fwd, "Forward pass");
+     m.def("varlen_fwd", &mha_varlen_fwd, "Forward pass (variable length)");
+     m.def("varlen_fwd_stage1", &mha_varlen_fwd_stage1, "Forward pass (variable length) nsa stage 1");
++    m.def("varlen_fwd_stage1_kl_teacher", &mha_varlen_fwd_stage1_kl_teacher, "Forward pass (variable length) KL-teacher stage 1");
+     m.def("bwd", &mha_bwd, "Backward pass");
+     m.def("varlen_bwd", &mha_varlen_bwd, "Backward pass (variable length)");
+     m.def("fwd_kvcache", &mha_fwd_kvcache, "Forward pass, with KV-cache");
+-} 
+\ No newline at end of file
++} 
+diff --git a/csrc/flash_attn/flash_api.cpp b/csrc/flash_attn/flash_api.cpp
+index 76d4ef7..bc1aea6 100644
+--- a/csrc/flash_attn/flash_api.cpp
++++ b/csrc/flash_attn/flash_api.cpp
+@@ -1,5 +1,7 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++ * SPDX-License-Identifier: BSD-3-Clause AND Apache-2.0
+  ******************************************************************************/
+ 
+ // Include these 2 headers instead of torch/extension.h since we don't need all of the torch headers.
+@@ -147,6 +149,9 @@ void set_params_fprop(Flash_fwd_params &params,
+     #endif
+ 
+     params.is_seqlens_k_cumulative = true;
++    params.stage1_causal_stride = 16;
++    params.stage1_query_offset = 0;
++    params.stage1_kl_teacher_mode = false;
+ 
+     #ifdef FLASHATTENTION_DISABLE_UNEVEN_K
+         TORCH_CHECK(d == d_rounded, "This flash attention build does not support headdim not being a multiple of 32.");
+@@ -367,7 +372,8 @@ mha_fwd(at::Tensor &q,         // batch_size x seqlen_q x num_heads x round_mult
+     // bool is_sm75 = cc_major == 7 && cc_minor == 5;
+     bool is_sm8x = cc_major == 8 && cc_minor >= 0;
+     bool is_sm90 = cc_major == 9 && cc_minor == 0;
+-    TORCH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
++    bool is_sm10x = cc_major >= 10;
++    TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+     // We will support Turing in the near future
+     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
+ 
+@@ -375,7 +381,7 @@ mha_fwd(at::Tensor &q,         // batch_size x seqlen_q x num_heads x round_mult
+     TORCH_CHECK(q_dtype == torch::kFloat16 || q_dtype == torch::kBFloat16,
+                 "FlashAttention only support fp16 and bf16 data type");
+     if (q_dtype == torch::kBFloat16) {
+-        TORCH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
++        TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+     }
+     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
+     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
+@@ -547,7 +553,8 @@ mha_varlen_fwd(at::Tensor &q,  // total_q x num_heads x head_size, total_q := \s
+     // bool is_sm75 = cc_major == 7 && cc_minor == 5;
+     bool is_sm8x = cc_major == 8 && cc_minor >= 0;
+     bool is_sm90 = cc_major == 9 && cc_minor == 0;
+-    TORCH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
++    bool is_sm10x = cc_major >= 10;
++    TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+     // We will support Turing in the near future
+     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
+ 
+@@ -555,7 +562,7 @@ mha_varlen_fwd(at::Tensor &q,  // total_q x num_heads x head_size, total_q := \s
+     TORCH_CHECK(q_dtype == torch::kFloat16 || q_dtype == torch::kBFloat16,
+                 "FlashAttention only support fp16 and bf16 data type");
+     if (q_dtype == torch::kBFloat16) {
+-        TORCH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
++        TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+     }
+     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
+     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
+@@ -595,7 +602,9 @@ mha_varlen_fwd(at::Tensor &q,  // total_q x num_heads x head_size, total_q := \s
+     const int page_block_size = !paged_KV ? 1 : k.size(1);
+     TORCH_CHECK(!paged_KV || page_block_size % 256 == 0, "Paged KV cache block size must be divisible by 256");
+ 
+-    if (max_seqlen_q == 1 && !alibi_slopes_.has_value()) { is_causal = false; }  // causal=true is the same as causal=false in this case
++    if (max_seqlen_q == 1 && !alibi_slopes_.has_value()) {
++        is_causal = false;  // causal=true is the same as causal=false in this case
++    }
+     if (is_causal) { window_size_right = 0; }
+ 
+     void *cu_seqlens_q_d = cu_seqlens_q.data_ptr();
+@@ -782,7 +791,7 @@ mha_varlen_fwd(at::Tensor &q,  // total_q x num_heads x head_size, total_q := \s
+ }
+ 
+ std::vector<at::Tensor>
+-mha_varlen_fwd_stage1(at::Tensor &q,  // total_q x num_heads x head_size, total_q := \sum_{i=0}^{b} s_i
++mha_varlen_fwd_stage1_impl(at::Tensor &q,  // total_q x num_heads x head_size, total_q := \sum_{i=0}^{b} s_i
+                const at::Tensor &k,  // total_k x num_heads_k x head_size, total_k := \sum_{i=0}^{b} s_i or num_blocks x page_block_size x num_heads_k x head_size if there's a block_table.
+                const at::Tensor &v,  // total_k x num_heads_k x head_size, total_k := \sum_{i=0}^{b} s_i or num_blocks x page_block_size x num_heads_k x head_size if there's a block_table.
+                c10::optional<at::Tensor> &out_, // total_q x num_heads x head_size, total_k := \sum_{i=0}^{b} s_i
+@@ -803,7 +812,10 @@ mha_varlen_fwd_stage1(at::Tensor &q,  // total_q x num_heads x head_size, total_
+                int window_size_right,
+                const float softcap,
+                const bool return_softmax,
+-               c10::optional<at::Generator> gen_) {
++               c10::optional<at::Generator> gen_,
++               const int stage1_causal_stride,
++               const int stage1_query_offset,
++               const bool stage1_kl_teacher_mode) {
+ 
+     // Otherwise the kernel will be launched from cuda:0 device
+     at::cuda::CUDAGuard device_guard{q.device()};
+@@ -812,7 +824,8 @@ mha_varlen_fwd_stage1(at::Tensor &q,  // total_q x num_heads x head_size, total_
+     // bool is_sm75 = cc_major == 7 && cc_minor == 5;
+     bool is_sm8x = cc_major == 8 && cc_minor >= 0;
+     bool is_sm90 = cc_major == 9 && cc_minor == 0;
+-    TORCH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
++    bool is_sm10x = cc_major >= 10;
++    TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+     // We will support Turing in the near future
+     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
+ 
+@@ -820,7 +833,7 @@ mha_varlen_fwd_stage1(at::Tensor &q,  // total_q x num_heads x head_size, total_
+     TORCH_CHECK(q_dtype == torch::kFloat16 || q_dtype == torch::kBFloat16,
+                 "FlashAttention only support fp16 and bf16 data type");
+     if (q_dtype == torch::kBFloat16) {
+-        TORCH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
++        TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+     }
+     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
+     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
+@@ -863,7 +876,9 @@ mha_varlen_fwd_stage1(at::Tensor &q,  // total_q x num_heads x head_size, total_
+     const int page_block_size = !paged_KV ? 1 : k.size(1);
+     TORCH_CHECK(!paged_KV || page_block_size % 256 == 0, "Paged KV cache block size must be divisible by 256");
+ 
+-    if (max_seqlen_q == 1 && !alibi_slopes_.has_value()) { is_causal = false; }  // causal=true is the same as causal=false in this case
++    if (max_seqlen_q == 1 && !alibi_slopes_.has_value() && !stage1_kl_teacher_mode) {
++        is_causal = false;  // Only valid for the legacy right-aligned stage1 mask.
++    }
+     if (is_causal) { window_size_right = 0; }
+ 
+     void *cu_seqlens_q_d = cu_seqlens_q.data_ptr();
+@@ -987,6 +1002,9 @@ mha_varlen_fwd_stage1(at::Tensor &q,  // total_q x num_heads x head_size, total_
+ 
+     params.m_block_dim = 16;
+     params.n_block_dim = 1;
++    params.stage1_causal_stride = stage1_causal_stride;
++    params.stage1_query_offset = stage1_query_offset;
++    params.stage1_kl_teacher_mode = stage1_kl_teacher_mode;
+ 
+     if (paged_KV) {
+         params.block_table = block_table.data_ptr<int>();
+@@ -1048,6 +1066,72 @@ mha_varlen_fwd_stage1(at::Tensor &q,  // total_q x num_heads x head_size, total_
+     return {p};
+ }
+ 
++std::vector<at::Tensor>
++mha_varlen_fwd_stage1(at::Tensor &q,
++               const at::Tensor &k,
++               const at::Tensor &v,
++               c10::optional<at::Tensor> &out_,
++               const at::Tensor &cu_seqlens_q,
++               const at::Tensor &cu_seqlens_k,
++               const at::Tensor &cu_seqlens_v,
++               c10::optional<at::Tensor> &seqused_k,
++               c10::optional<const at::Tensor> &leftpad_k_,
++               c10::optional<at::Tensor> &block_table_,
++               c10::optional<at::Tensor> &alibi_slopes_,
++               int max_seqlen_q,
++               const int max_seqlen_k,
++               const float p_dropout,
++               const float softmax_scale,
++               const bool zero_tensors,
++               bool is_causal,
++               int window_size_left,
++               int window_size_right,
++               const float softcap,
++               const bool return_softmax,
++               c10::optional<at::Generator> gen_) {
++    return mha_varlen_fwd_stage1_impl(
++        q, k, v, out_, cu_seqlens_q, cu_seqlens_k, cu_seqlens_v, seqused_k, leftpad_k_,
++        block_table_, alibi_slopes_, max_seqlen_q, max_seqlen_k, p_dropout, softmax_scale,
++        zero_tensors, is_causal, window_size_left, window_size_right, softcap, return_softmax,
++        gen_, /*stage1_causal_stride=*/16, /*stage1_query_offset=*/0, /*stage1_kl_teacher_mode=*/false
++    );
++}
++
++std::vector<at::Tensor>
++mha_varlen_fwd_stage1_kl_teacher(at::Tensor &q,
++               const at::Tensor &k,
++               const at::Tensor &v,
++               c10::optional<at::Tensor> &out_,
++               const at::Tensor &cu_seqlens_q,
++               const at::Tensor &cu_seqlens_k,
++               const at::Tensor &cu_seqlens_v,
++               c10::optional<at::Tensor> &seqused_k,
++               c10::optional<const at::Tensor> &leftpad_k_,
++               c10::optional<at::Tensor> &block_table_,
++               c10::optional<at::Tensor> &alibi_slopes_,
++               int max_seqlen_q,
++               const int max_seqlen_k,
++               const float p_dropout,
++               const float softmax_scale,
++               const bool zero_tensors,
++               bool is_causal,
++               int window_size_left,
++               int window_size_right,
++               const float softcap,
++               const bool return_softmax,
++               c10::optional<at::Generator> gen_,
++               const int causal_stride,
++               const int query_offset) {
++    TORCH_CHECK(causal_stride > 0, "causal_stride must be positive");
++    TORCH_CHECK(query_offset >= 0, "query_offset must be non-negative");
++    return mha_varlen_fwd_stage1_impl(
++        q, k, v, out_, cu_seqlens_q, cu_seqlens_k, cu_seqlens_v, seqused_k, leftpad_k_,
++        block_table_, alibi_slopes_, max_seqlen_q, max_seqlen_k, p_dropout, softmax_scale,
++        zero_tensors, is_causal, window_size_left, window_size_right, softcap, return_softmax,
++        gen_, causal_stride, query_offset, /*stage1_kl_teacher_mode=*/true
++    );
++}
++
+ void run_mha_bwd(Flash_bwd_params &params, cudaStream_t stream) {
+     FP16_SWITCH(!params.is_bf16, [&] {
+         HEADDIM_SWITCH(params.d, [&] {
+@@ -1092,7 +1176,8 @@ mha_bwd(const at::Tensor &dout,  // batch_size x seqlen_q x num_heads, x multipl
+     bool is_sm8x = cc_major == 8 && cc_minor >= 0;
+     bool is_sm80 = cc_major == 8 && cc_minor == 0;
+     bool is_sm90 = cc_major == 9 && cc_minor == 0;
+-    TORCH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
++    bool is_sm10x = cc_major >= 10;
++    TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+     // We will support Turing in the near future
+     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
+ 
+@@ -1103,7 +1188,7 @@ mha_bwd(const at::Tensor &dout,  // batch_size x seqlen_q x num_heads, x multipl
+     TORCH_CHECK(q_dtype == torch::kFloat16 || q_dtype == torch::kBFloat16,
+                 "FlashAttention only support fp16 and bf16 data type");
+     if (q_dtype == torch::kBFloat16) {
+-        TORCH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
++        TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+     }
+     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
+     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
+@@ -1131,7 +1216,7 @@ mha_bwd(const at::Tensor &dout,  // batch_size x seqlen_q x num_heads, x multipl
+     TORCH_CHECK(head_size % 8 == 0, "head_size should be a multiple of 8");
+     TORCH_CHECK(head_size <= 256, "FlashAttention backward only supports head dimension at most 256");
+     if (head_size > 192 && is_dropout) {
+-        TORCH_CHECK(is_sm80 || is_sm90, "FlashAttention backward for head dim > 192 with dropout requires A100/A800 or H100/H800");
++        TORCH_CHECK(is_sm10x || is_sm80 || is_sm90, "FlashAttention backward for head dim > 192 with dropout requires A100/A800, H100/H800, or newer");
+     }
+     TORCH_CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
+ 
+@@ -1315,6 +1400,7 @@ mha_varlen_bwd(const at::Tensor &dout,  // total_q x num_heads, x head_size
+     bool is_sm8x = cc_major == 8 && cc_minor >= 0;
+     bool is_sm80 = cc_major == 8 && cc_minor == 0;
+     bool is_sm90 = cc_major == 9 && cc_minor == 0;
++    bool is_sm10x = cc_major >= 10;
+     const bool has_blockmask = col_blockmask_.has_value();
+     at::Tensor col_blockmask;
+     if (has_blockmask) {
+@@ -1323,7 +1409,7 @@ mha_varlen_bwd(const at::Tensor &dout,  // total_q x num_heads, x head_size
+     if(has_blockmask){
+         TORCH_CHECK(col_blockmask.dtype() == torch::kInt64, "col_blockmask must have dtype int64");
+     }
+-    TORCH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
++    TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+     // We will support Turing in the near future
+     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
+     bool is_dropout = p_dropout > 0.0;
+@@ -1333,7 +1419,7 @@ mha_varlen_bwd(const at::Tensor &dout,  // total_q x num_heads, x head_size
+     TORCH_CHECK(q_dtype == torch::kFloat16 || q_dtype == torch::kBFloat16,
+                 "FlashAttention only support fp16 and bf16 data type");
+     if (q_dtype == torch::kBFloat16) {
+-        TORCH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
++        TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+     }
+     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
+     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
+@@ -1370,7 +1456,7 @@ mha_varlen_bwd(const at::Tensor &dout,  // total_q x num_heads, x head_size
+     TORCH_CHECK(head_size % 8 == 0, "head_size should be a multiple of 8");
+     TORCH_CHECK(head_size <= 256, "FlashAttention backward only supports head dimension at most 256");
+     if (head_size > 192 && is_dropout) {
+-        TORCH_CHECK(is_sm80 || is_sm90, "FlashAttention backward for head dim > 192 with dropout requires A100/A800 or H100/H800");
++        TORCH_CHECK(is_sm10x || is_sm80 || is_sm90, "FlashAttention backward for head dim > 192 with dropout requires A100/A800, H100/H800, or newer");
+     }
+     TORCH_CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
+     if (softcap > 0.f) { TORCH_CHECK(p_dropout == 0.f, "Softcapping does not support dropout for now"); }
+@@ -1577,7 +1663,8 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
+     // bool is_sm75 = cc_major == 7 && cc_minor == 5;
+     bool is_sm8x = cc_major == 8 && cc_minor >= 0;
+     bool is_sm90 = cc_major == 9 && cc_minor == 0;
+-    TORCH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
++    bool is_sm10x = cc_major >= 10;
++    TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+     // We will support Turing in the near future
+     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
+ 
+@@ -1585,7 +1672,7 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
+     TORCH_CHECK(q_dtype == torch::kFloat16 || q_dtype == torch::kBFloat16,
+                 "FlashAttention only support fp16 and bf16 data type");
+     if (q_dtype == torch::kBFloat16) {
+-        TORCH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
++        TORCH_CHECK(is_sm10x || is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+     }
+     TORCH_CHECK(kcache.dtype() == q_dtype, "query and key must have the same dtype");
+     TORCH_CHECK(vcache.dtype() == q_dtype, "query and value must have the same dtype");
+@@ -1841,5 +1928,3 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
+     }
+     return {out, softmax_lse};
+ }
+-
+-
+diff --git a/csrc/flash_attn/src/alibi.h b/csrc/flash_attn/src/alibi.h
+index e714233..8662912 100644
+--- a/csrc/flash_attn/src/alibi.h
++++ b/csrc/flash_attn/src/alibi.h
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from FlashAttention (https://github.com/Dao-AILab/flash-attention).
++// Copyright (c) 2022-2024 Tri Dao and contributors.
++// SPDX-License-Identifier: BSD-3-Clause
++
+ #include <cmath>
+ 
+ #include <cute/tensor.hpp>
+diff --git a/csrc/flash_attn/src/block_info.h b/csrc/flash_attn/src/block_info.h
+index d520476..183bb4a 100644
+--- a/csrc/flash_attn/src/block_info.h
++++ b/csrc/flash_attn/src/block_info.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2023, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/dropout.h b/csrc/flash_attn/src/dropout.h
+index 4882f97..58aa6ae 100644
+--- a/csrc/flash_attn/src/dropout.h
++++ b/csrc/flash_attn/src/dropout.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/flash.h b/csrc/flash_attn/src/flash.h
+index b400458..4afa843 100644
+--- a/csrc/flash_attn/src/flash.h
++++ b/csrc/flash_attn/src/flash.h
+@@ -1,5 +1,7 @@
+ /******************************************************************************
+  * Copyright (c) 2023, Tri Dao.
++ * Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++ * SPDX-License-Identifier: BSD-3-Clause AND Apache-2.0
+  ******************************************************************************/
+ 
+ #pragma once
+@@ -80,6 +82,9 @@ struct Flash_fwd_params : public Qkv_params {
+     uint64_t *__restrict__ blockmask;
+     int m_block_dim, n_block_dim, num_k_heads;
+     int num_blocks_m, num_blocks_n;
++    int stage1_causal_stride;
++    int stage1_query_offset;
++    bool stage1_kl_teacher_mode;
+ 
+     // The K_new and V_new matrices.
+     void * __restrict__ knew_ptr;
+diff --git a/csrc/flash_attn/src/flash_blockmask.h b/csrc/flash_attn/src/flash_blockmask.h
+index e7b7676..406bda8 100644
+--- a/csrc/flash_attn/src/flash_blockmask.h
++++ b/csrc/flash_attn/src/flash_blockmask.h
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from FlashAttention (https://github.com/Dao-AILab/flash-attention).
++// Copyright (c) 2022-2024 Tri Dao and contributors.
++// SPDX-License-Identifier: BSD-3-Clause
++
+ #pragma once
+ 
+ namespace flash {
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim128_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim128_bf16_causal_sm80.cu
+index 13132e8..9501cce 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim128_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim128_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim128_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim128_bf16_sm80.cu
+index 85a5dc8..4718312 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim128_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim128_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim128_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim128_fp16_causal_sm80.cu
+index 5d27cd9..ea0097b 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim128_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim128_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim128_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim128_fp16_sm80.cu
+index 2d7ddf4..010654c 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim128_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim128_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim160_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim160_bf16_causal_sm80.cu
+index c18a78c..45bc0db 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim160_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim160_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim160_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim160_bf16_sm80.cu
+index 1b61737..8f812b2 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim160_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim160_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim160_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim160_fp16_causal_sm80.cu
+index a511162..b5385da 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim160_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim160_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim160_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim160_fp16_sm80.cu
+index c9ce19a..1714516 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim160_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim160_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim192_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim192_bf16_causal_sm80.cu
+index f492a71..f2d7ab2 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim192_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim192_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim192_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim192_bf16_sm80.cu
+index 2df58da..5bf329f 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim192_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim192_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim192_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim192_fp16_causal_sm80.cu
+index 69cad5a..617c149 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim192_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim192_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim192_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim192_fp16_sm80.cu
+index 3d4cab5..b4a0879 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim192_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim192_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim224_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim224_bf16_sm80.cu
+index b2b58e2..38ce5dd 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim224_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim224_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim224_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim224_fp16_sm80.cu
+index e65cdae..e7eeb63 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim224_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim224_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim256_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim256_bf16_causal_sm80.cu
+index 6927445..48a752f 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim256_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim256_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim256_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim256_bf16_sm80.cu
+index d718ec8..d62aa4f 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim256_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim256_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim256_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim256_fp16_causal_sm80.cu
+index 551c695..c92dea0 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim256_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim256_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim256_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim256_fp16_sm80.cu
+index a587700..2906881 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim256_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim256_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim32_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim32_bf16_causal_sm80.cu
+index 1282939..4991ec3 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim32_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim32_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim32_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim32_bf16_sm80.cu
+index d6d4036..71f700b 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim32_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim32_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim32_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim32_fp16_causal_sm80.cu
+index 60aa2d6..c45cc13 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim32_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim32_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim32_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim32_fp16_sm80.cu
+index b06d50e..14433c3 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim32_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim32_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim64_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim64_bf16_causal_sm80.cu
+index 52b93be..0ae898b 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim64_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim64_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim64_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim64_bf16_sm80.cu
+index 09d9e2b..e130119 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim64_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim64_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim64_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim64_fp16_causal_sm80.cu
+index 5a4ea5f..e0c0707 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim64_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim64_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim64_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim64_fp16_sm80.cu
+index fb115ff..8c36e29 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim64_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim64_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim96_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim96_bf16_causal_sm80.cu
+index 5f4c26a..6c7e9a8 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim96_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim96_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim96_bf16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim96_bf16_sm80.cu
+index 224213d..f662fcd 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim96_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim96_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim96_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim96_fp16_causal_sm80.cu
+index d034901..d4ce0ac 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim96_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim96_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_hdim96_fp16_sm80.cu b/csrc/flash_attn/src/flash_bwd_hdim96_fp16_sm80.cu
+index 663fc85..7aa3291 100644
+--- a/csrc/flash_attn/src/flash_bwd_hdim96_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_bwd_hdim96_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_bwd_kernel.h b/csrc/flash_attn/src/flash_bwd_kernel.h
+index f6b9650..79e296c 100644
+--- a/csrc/flash_attn/src/flash_bwd_kernel.h
++++ b/csrc/flash_attn/src/flash_bwd_kernel.h
+@@ -1,5 +1,6 @@
+ /***************************************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/flash_bwd_launch_template.h b/csrc/flash_attn/src/flash_bwd_launch_template.h
+index dacc37a..25ebd72 100644
+--- a/csrc/flash_attn/src/flash_bwd_launch_template.h
++++ b/csrc/flash_attn/src/flash_bwd_launch_template.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+@@ -176,13 +177,13 @@ void run_mha_bwd_hdim64(Flash_bwd_params &params, cudaStream_t stream) {
+         // run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 128, 64, 8, 4, 2, 4, false, false, T>, Is_dropout>(params, stream);
+         // This is slightly faster. We want to split M more so we need fewer registers to store LSE.
+         if (max_smem_per_block >= 144 * 1024) {
+-            run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 16, 64, 4, 1, 4, 1, false, false, T>, Is_dropout, Is_causal>(params, stream);
++            run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 128, 128, 8, 4, 4, 4, false, false, T>, Is_dropout, Is_causal>(params, stream);
+             // This has a lot of register spilling
+             // run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 128, 128, 8, 4, 4, 4, true, false, T>, Is_dropout>(params, stream);
+         } else {
+             // if (params.h == params.h_k) {
+                 // run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 64, 128, 8, 2, 4, 4, false, false, T>, Is_dropout>(params, stream);
+-            run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 16, 64, 4, 1, 4, 1, false, false, T>, Is_dropout, Is_causal>(params, stream);
++            run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 64, 128, 8, 2, 4, 4, true, false, T>, Is_dropout, Is_causal>(params, stream);
+                 // run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 128, 64, 8, 4, 2, 4, false, false, T>, Is_dropout>(params, stream);
+                 // run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 128, 64, 8, 4, 2, 4, true, false, T>, Is_dropout>(params, stream);
+             // } else {
+diff --git a/csrc/flash_attn/src/flash_bwd_preprocess_kernel.h b/csrc/flash_attn/src/flash_bwd_preprocess_kernel.h
+index c8e3074..b91e25b 100644
+--- a/csrc/flash_attn/src/flash_bwd_preprocess_kernel.h
++++ b/csrc/flash_attn/src/flash_bwd_preprocess_kernel.h
+@@ -1,5 +1,6 @@
+ /***************************************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim128_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim128_bf16_causal_sm80.cu
+index 9383c10..d77d378 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim128_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim128_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim128_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim128_bf16_sm80.cu
+index f03abda..96139c6 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim128_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim128_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim128_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim128_fp16_causal_sm80.cu
+index c616628..f5d388c 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim128_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim128_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim128_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim128_fp16_sm80.cu
+index 4ff6b9f..1863d80 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim128_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim128_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim160_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim160_bf16_causal_sm80.cu
+index d6d4371..4061b17 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim160_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim160_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim160_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim160_bf16_sm80.cu
+index 5af68ac..639f0d2 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim160_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim160_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim160_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim160_fp16_causal_sm80.cu
+index 1ef511a..8fcd26f 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim160_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim160_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim160_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim160_fp16_sm80.cu
+index 96abfbd..959d590 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim160_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim160_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim192_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim192_bf16_causal_sm80.cu
+index 077d25d..b70d927 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim192_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim192_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim192_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim192_bf16_sm80.cu
+index ea5f265..f3859df 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim192_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim192_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim192_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim192_fp16_causal_sm80.cu
+index a4a7bc2..f473641 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim192_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim192_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim192_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim192_fp16_sm80.cu
+index c30c4a1..6998447 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim192_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim192_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim224_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim224_bf16_causal_sm80.cu
+index a12a5f4..8c87303 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim224_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim224_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim224_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim224_bf16_sm80.cu
+index 8690bdb..277caf7 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim224_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim224_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim224_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim224_fp16_causal_sm80.cu
+index f01dad0..2b09ace 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim224_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim224_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim224_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim224_fp16_sm80.cu
+index 7ec1e16..0098891 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim224_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim224_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim256_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim256_bf16_causal_sm80.cu
+index f84e978..093de79 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim256_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim256_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim256_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim256_bf16_sm80.cu
+index c52f041..1cd4f56 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim256_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim256_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim256_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim256_fp16_causal_sm80.cu
+index f96f7ed..9f48f62 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim256_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim256_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim256_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim256_fp16_sm80.cu
+index 9c7c6b9..850ca7b 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim256_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim256_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim32_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim32_bf16_causal_sm80.cu
+index e21d040..ff0399a 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim32_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim32_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim32_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim32_bf16_sm80.cu
+index f377a5b..2596f53 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim32_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim32_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim32_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim32_fp16_causal_sm80.cu
+index 74e4d66..f7eaf76 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim32_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim32_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim32_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim32_fp16_sm80.cu
+index e85db18..033a8f9 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim32_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim32_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim64_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim64_bf16_causal_sm80.cu
+index 9297e8b..ecb3700 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim64_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim64_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim64_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim64_bf16_sm80.cu
+index 8364b1e..2a8e3ce 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim64_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim64_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim64_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim64_fp16_causal_sm80.cu
+index 1c6ed7e..107bb80 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim64_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim64_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim64_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim64_fp16_sm80.cu
+index 3c87573..87d18b9 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim64_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim64_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim96_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim96_bf16_causal_sm80.cu
+index 49fae85..118034c 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim96_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim96_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim96_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim96_bf16_sm80.cu
+index c5af1cf..6a0d41b 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim96_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim96_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim96_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim96_fp16_causal_sm80.cu
+index b0d6c99..3bf0af4 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim96_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim96_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_hdim96_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_hdim96_fp16_sm80.cu
+index c97aa33..15870d1 100644
+--- a/csrc/flash_attn/src/flash_fwd_hdim96_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_hdim96_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_kernel.h b/csrc/flash_attn/src/flash_fwd_kernel.h
+index bc6dd67..8b4d5bb 100644
+--- a/csrc/flash_attn/src/flash_fwd_kernel.h
++++ b/csrc/flash_attn/src/flash_fwd_kernel.h
+@@ -1,5 +1,7 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++ * SPDX-License-Identifier: BSD-3-Clause AND Apache-2.0
+  ******************************************************************************/
+ 
+ #pragma once
+@@ -1228,47 +1230,23 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+         ? n_split_idx * n_blocks_per_split
+         : std::max(n_split_idx * n_blocks_per_split, (m_block * kBlockM + binfo.actual_seqlen_k - binfo.actual_seqlen_q - params.window_size_left) / kBlockN);
+     int n_block_max = std::min(cute::ceil_div(binfo.actual_seqlen_k, kBlockN), (n_split_idx + 1) * n_blocks_per_split);
+-    int n_block_max_c = std::min(cute::ceil_div(binfo.actual_seqlen_c, kBlockN), (n_split_idx + 1) * n_blocks_per_split);
+-    // if (tidx == 0) {
+-    //     printf("n_block_max = %d, n_block_max_c = %d, binfo.actual_seqlen_k = %d, binfo.actual_seqlen_c = %d, kBlockN = %d, n_split_idx = %d, n_blocks_per_split = %d\n", n_block_max, n_block_max_c, binfo.actual_seqlen_k, binfo.actual_seqlen_c, kBlockN, n_split_idx, n_blocks_per_split);
+-    // }
+-
+-    int phase_1_stride = 64;
+-    if (binfo.actual_seqlen_k == binfo.actual_seqlen_c) {
+-        // 这种情况下根本就没做compressed lse
+-        phase_1_stride = 16;
+-    }
+-    
+-    if (Is_local || Is_causal) {
+-        // 注意到存在q_len比k_len短的情况，避免截断原本需要的k
+-        // k对应以16为步长移动的, 计算q的长度对应的k, 然后计算偏移
+-        // 用 len - 15 / 16 这样计算是因为 block_size = 32
+-        // (len - 32) / 16 + 1
+-        const int _ori_actual_seqlen_q = binfo.actual_seqlen_q / params.m_block_dim;
+-        const int _k_stride = 16;
+-        const int _k_actual_seqlen_q = (_ori_actual_seqlen_q - _k_stride + 1 ) / _k_stride;
+-        const int _max_seqlen_k = binfo.actual_seqlen_k;
+-        const int _offset_k = _max_seqlen_k - _k_actual_seqlen_q;
+-
+-        // coarse kernel对应以64为步长移动的, 计算q的长度对应的k, 然后计算偏移
+-        const int _c_stride = phase_1_stride;
+-        const int _c_actual_seqlen_q = (_ori_actual_seqlen_q - _c_stride + 1 ) / _c_stride;
+-        // 分析可知上下界算出来的_max_seqlen_c是一样的
+-        const int _max_seqlen_c = ((_max_seqlen_k * 16 + 15) - phase_1_stride + 1) / phase_1_stride;
+-        const int _offset_c = _max_seqlen_c - _c_actual_seqlen_q;
+-        // 如果q原本和k等长，可以_k_actual_seqlen_q == _max_seqlen_k, _c_actual_seqlen_q == _max_seqlen_k / 4
+-
++    // The inference stage1 path keeps its historical right-aligned causal rule.
++    // KL-teacher mode instead uses exact start-position semantics with a caller-
++    // supplied stride and absolute query offset.
++    const int stage1_stride = params.stage1_kl_teacher_mode ? params.stage1_causal_stride : 16;
++    const int stage1_query_offset = params.stage1_kl_teacher_mode ? params.stage1_query_offset : 0;
++    const int _ori_seqlen_q = binfo.actual_seqlen_q / params.m_block_dim;
++    const int _k_actual_seqlen_q = (_ori_seqlen_q - 16 + 1) / 16;
++    const int _offset_k = binfo.actual_seqlen_k - _k_actual_seqlen_q;
++    if (Is_causal || Is_local) {
+         const int max_q = (m_block + 1) * kBlockM / params.m_block_dim - 1;
+-        const int max_k = (max_q - 16 + 1) / 16 + _offset_k;
+-        n_block_max = std::min(n_block_max, cute::ceil_div(max_k, kBlockN));
+-        const int max_c = (max_q - phase_1_stride + 1) / phase_1_stride + _offset_c;
+-        n_block_max_c = std::min(n_block_max_c, cute::ceil_div(max_c, kBlockN));
+-
+-        // if (cute::thread0()) {
+-            // printf("binfo.actual_seqlen_c = %d, binfo.actual_seqlen_k = %d, _ori_actual_seqlen_q = %d, _k_actual_seqlen_q = %d, _max_seqlen_k = %d, _offset_k = %d, _c_actual_seqlen_q = %d, _max_seqlen_c = %d, _offset_c = %d, max_q = %d, max_k = %d, max_c = %d\n, n_block_max = %d, n_block_max_c = %d\n", binfo.actual_seqlen_c, binfo.actual_seqlen_k, _ori_actual_seqlen_q, _k_actual_seqlen_q, _max_seqlen_k, _offset_k, _c_actual_seqlen_q, _max_seqlen_c, _offset_c, max_q, max_k, max_c, n_block_max, n_block_max_c); //}
+-        // flash::cp_async_wait<0>(); __syncthreads();
++        const int max_k = params.stage1_kl_teacher_mode
++            ? (stage1_query_offset + max_q) / stage1_stride + 1
++            : (max_q - 16 + 1) / 16 + _offset_k;
++        n_block_max = std::min(n_block_max,
++                               cute::ceil_div(max_k, kBlockN));
+     }
+-    if (n_block_min >= n_block_max_c) {  // This also covers the case where n_block_max <= 0
++    if (n_block_min >= n_block_max) {  // This also covers the case where n_block_max <= 0
+         // We exit early and write 0 to gOaccum and -inf to gLSEaccum.
+         // Otherwise we might read OOB elements from gK and gV,
+         // or get wrong results when we combine gOaccum from different blocks.
+@@ -1288,10 +1266,6 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+         ? binfo.k_offset(params.k_batch_stride, params.k_row_stride, bidb_cache)
+           + (n_block_max - 1) * kBlockN * params.k_row_stride + (bidh / params.h_h_k_ratio) * params.k_head_stride
+         : block_table[block_table_idx] * params.k_batch_stride + block_table_offset * params.k_row_stride + (bidh / params.h_h_k_ratio) * params.k_head_stride;
+-    const index_t row_offset_v = block_table == nullptr
+-        ? binfo.v_offset(params.v_batch_stride, params.v_row_stride, bidb_cache)
+-          + (n_block_max_c - 1) * kBlockN * params.v_row_stride + (bidh / params.h_h_k_ratio) * params.v_head_stride
+-        : block_table[block_table_idx] * params.v_batch_stride + block_table_offset * params.v_row_stride + (bidh / params.h_h_k_ratio) * params.v_head_stride;
+ 
+     // const index_t row_offset_p = ((bidb * params.h + bidh) * params.seqlen_q_rounded/16 // TODO 16 is m_block_dim
+     //     + m_block * kBlockM/16) * params.seqlen_k_rounded + (n_block_max - 1) * kBlockN;
+@@ -1314,9 +1288,6 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+     Tensor gK = make_tensor(make_gmem_ptr(reinterpret_cast<Element *>(params.k_ptr) + row_offset_k),
+                             Shape<Int<kBlockN>, Int<kHeadDim>>{},
+                             make_stride(params.k_row_stride, _1{}));
+-    Tensor gC = make_tensor(make_gmem_ptr(reinterpret_cast<Element *>(params.v_ptr) + row_offset_v),
+-                            Shape<Int<kBlockN>, Int<kHeadDim>>{},
+-                            make_stride(params.v_row_stride, _1{}));
+     // if (threadIdx.x == 0 && blockIdx.y == 0 && blockIdx.z == 0) { printf("k_ptr = %p, row_offset_k = %d, gK_ptr = %p\n", params.k_ptr, row_offset_k, gK.data()); }
+     Tensor gP = make_tensor(make_gmem_ptr(reinterpret_cast<Element *>(params.p_ptr) + row_offset_p),
+                         Shape<Int<kBlockM/16>, Int<kBlockN>>{}, // TODO 16 is m_block_dim
+@@ -1331,7 +1302,7 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+ 
+     Tensor tQgQ = gmem_thr_copy_QKV.partition_S(gQ);
+     Tensor tQsQ = gmem_thr_copy_QKV.partition_D(sQ);
+-    Tensor tKgK = gmem_thr_copy_QKV.partition_S(gC);  // (KCPY, KCPY_N, KCPY_K)
++    Tensor tKgK = gmem_thr_copy_QKV.partition_S(gK);  // (KCPY, KCPY_N, KCPY_K)
+     Tensor tKsK = gmem_thr_copy_QKV.partition_D(sK);
+ 
+     typename Kernel_traits::TiledMma tiled_mma;
+@@ -1426,19 +1397,19 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+         }
+     }
+ 
+-    int n_block = n_block_max_c - 1;
++    int n_block = n_block_max - 1;
+     // We don't need to clear the sK smem tiles since we'll mask out the scores anyway.
+     flash::copy<Is_even_MN, Is_even_K>(gmem_tiled_copy_QKV, tKgK, tKsK, tKVcKV, tKVpKV,
+-                                       binfo.actual_seqlen_c - n_block * kBlockN);
++                                       binfo.actual_seqlen_k - n_block * kBlockN);
+     cute::cp_async_fence();
+ 
+     flash::Softmax<2 * size<1>(acc_o)> softmax;
+ 
+     const float alibi_slope = !Has_alibi ? 0.0f : reinterpret_cast<float *>(params.alibi_slopes_ptr)[bidb * params.alibi_slopes_batch_stride + bidh] / params.scale_softmax;
+-    flash::Mask<Is_causal, Is_local, Has_alibi> mask(binfo.actual_seqlen_c, binfo.actual_seqlen_q, params.window_size_left, params.window_size_right, alibi_slope, params.m_block_dim);
++    flash::Mask<Is_causal, Is_local, Has_alibi> mask(binfo.actual_seqlen_k, binfo.actual_seqlen_q, params.window_size_left, params.window_size_right, alibi_slope, params.m_block_dim);
+ 
+-    fwdIterator blockmask(params, binfo, kBlockM, kBlockN, bidb, bidh, m_block, n_block_min, n_block_max_c);
+-    int next_block_idx = blockmask.max_no_larger(n_block_max_c-1);
++    fwdIterator blockmask(params, binfo, kBlockM, kBlockN, bidb, bidh, m_block, n_block_min, n_block_max);
++    int next_block_idx = blockmask.max_no_larger(n_block_max-1);
+     int leap = 0;
+ 
+     // For performance reason, we separate out two kinds of iterations:
+@@ -1471,7 +1442,11 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+             }
+ 
+             mask.template apply_mask_stage1<Is_causal, Is_even_MN>(
+-                acc_s, n_block * kBlockN, m_block * kBlockM + (tidx / 32) * 16 + (tidx % 32) / 4, kNWarps * 16, phase_1_stride
++                acc_s, n_block * kBlockN, m_block * kBlockM + (tidx / 32) * 16 + (tidx % 32) / 4, kNWarps * 16,
++                /*stride=*/stage1_stride,
++                /*causal_k_offset=*/params.stage1_kl_teacher_mode ? 0 : _offset_k,
++                /*query_row_offset=*/stage1_query_offset,
++                /*kl_teacher_mode=*/params.stage1_kl_teacher_mode
+             );
+ 
+             next_block_idx = blockmask.max_no_larger(n_block-1);
+@@ -1564,7 +1539,7 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+         }
+ 
+         mask.template apply_mask_stage1</*Causal_mask=*/false>(
+-            acc_s, n_block * kBlockN, m_block * kBlockM + (tidx / 32) * 16 + (tidx % 32) / 4, kNWarps * 16, phase_1_stride
++            acc_s, n_block * kBlockN, m_block * kBlockM + (tidx / 32) * 16 + (tidx % 32) / 4, kNWarps * 16
+         );
+         softmax.template softmax_rescale_simple</*Is_first=*/false, /*Check_inf=*/Is_local>(acc_s, params.scale_softmax_log2);
+ 
+@@ -1586,9 +1561,6 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+                                        binfo.actual_seqlen_k - n_block * kBlockN);
+     cute::cp_async_fence();
+ 
+-    flash::Mask<Is_causal, Is_local, Has_alibi> mask(binfo.actual_seqlen_k, binfo.actual_seqlen_q, params.window_size_left, params.window_size_right, alibi_slope, params.m_block_dim);
+-    fwdIterator blockmask(params, binfo, kBlockM, kBlockN, bidb, bidh, m_block, n_block_min, n_block_max);
+-
+     next_block_idx = blockmask.max_no_larger(n_block_max-1);
+     leap = 0;
+ 
+@@ -1619,7 +1591,11 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+             }
+ 
+             mask.template apply_mask_stage1<Is_causal, Is_even_MN>(
+-                acc_s, n_block * kBlockN, m_block * kBlockM + (tidx / 32) * 16 + (tidx % 32) / 4, kNWarps * 16
++                acc_s, n_block * kBlockN, m_block * kBlockM + (tidx / 32) * 16 + (tidx % 32) / 4, kNWarps * 16,
++                /*stride=*/stage1_stride,
++                /*causal_k_offset=*/params.stage1_kl_teacher_mode ? 0 : _offset_k,
++                /*query_row_offset=*/stage1_query_offset,
++                /*kl_teacher_mode=*/params.stage1_kl_teacher_mode
+             );
+ 
+             next_block_idx = blockmask.max_no_larger(n_block-1);
+@@ -1742,6 +1718,7 @@ inline __device__ void compute_attn_1rowblock_splitkv_stage1(const Params &param
+     }
+     }
+ }
++
+ ////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+ template<typename Kernel_traits, bool Is_dropout, bool Is_causal, bool Is_local, bool Has_alibi, bool Is_even_MN, bool Is_even_K, bool Is_softcap, bool Return_softmax, typename Params>
+diff --git a/csrc/flash_attn/src/flash_fwd_launch_template.h b/csrc/flash_attn/src/flash_fwd_launch_template.h
+index 76937e8..17518ef 100644
+--- a/csrc/flash_attn/src/flash_fwd_launch_template.h
++++ b/csrc/flash_attn/src/flash_fwd_launch_template.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2023, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+@@ -252,11 +253,11 @@ void run_mha_fwd_hdim64(Flash_fwd_params &params, cudaStream_t stream) {
+             // Using 8 warps is 18% slower for seqlen=2k, 2 warps is 5% slower
+             // Using block size (64 x 256) is 27% slower for seqlen=2k
+             // Using block size (256 x 64) is 85% slower for seqlen=2k, because of register spilling
+-            run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 16, 64, 1, false, false, T>, Is_dropout, Is_causal>(params, stream);
++            run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 128, 128, 4, false, false, T>, Is_dropout, Is_causal>(params, stream);
+             // run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 128, 64, 4, true, false, T>, Is_dropout, Is_causal>(params, stream);
+             // run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 128, 64, 4, true, true, T>, Is_dropout, Is_causal>(params, stream);
+         } else {
+-            run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 16, 64, 1, false, false, T>, Is_dropout, Is_causal>(params, stream);
++            run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 128, 64, 4, false, false, T>, Is_dropout, Is_causal>(params, stream);
+             // run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 128, 64, 4, true, true, T>, Is_dropout, Is_causal>(params, stream);
+             // run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 128, 64, 4, true, false, T>, Is_dropout, Is_causal>(params, stream);
+             // run_flash_fwd<Flash_fwd_kernel_traits<Headdim, 128, 128, 4, false, false, T>, Is_dropout, Is_causal>(params, stream);
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_causal_sm80.cu
+index a959c9c..67b4517 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_sm80.cu
+index e608e30..76bf4bb 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim128_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_causal_sm80.cu
+index 3dd74e2..16fdc6d 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_sm80.cu
+index addaced..4eb0d27 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_causal_sm80.cu
+index 8ace7bd..bb315c0 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_sm80.cu
+index 1e133ec..18831dd 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim160_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_causal_sm80.cu
+index 1723c69..d5e6c27 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_sm80.cu
+index 892d235..39171d1 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim160_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_causal_sm80.cu
+index d07ee0a..f5d35a7 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_sm80.cu
+index 23cfa59..dbcf883 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim192_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_causal_sm80.cu
+index 273a284..eeda3d6 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_sm80.cu
+index 0f588d1..d5c6f82 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim192_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_causal_sm80.cu
+index ea024d9..94e2cf3 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_sm80.cu
+index b06ae5a..05c3b28 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim224_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_causal_sm80.cu
+index b217f37..5f1511e 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_sm80.cu
+index 8cf2eab..696ee0d 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim224_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2023, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_causal_sm80.cu
+index 370fe9c..6e5673c 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_sm80.cu
+index 508f07f..037af36 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim256_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_causal_sm80.cu
+index 019ded6..ea89e53 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_sm80.cu
+index 708f554..78d056d 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim256_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_causal_sm80.cu
+index 5a205b7..4ca8c4f 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_sm80.cu
+index 2c576f1..5acacaf 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_causal_sm80.cu
+index 484a15e..2ad95b1 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_sm80.cu
+index 5474ae8..d3f35a4 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_causal_sm80.cu
+index 8c7da41..300e0c0 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_sm80.cu
+index 93f29de..ffed47f 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_causal_sm80.cu
+index 1e2e12b..58d235a 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_sm80.cu
+index 16c34ed..717240f 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_causal_sm80.cu
+index 50080c4..e1c16c0 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_sm80.cu
+index ae56ddd..dd990bd 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_causal_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_causal_sm80.cu
+index ed30576..0a131ed 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_causal_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_causal_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_sm80.cu b/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_sm80.cu
+index 0220646..a1cd360 100644
+--- a/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_sm80.cu
++++ b/csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_sm80.cu
+@@ -1,4 +1,5 @@
+ // Copyright (c) 2024, Tri Dao.
++// SPDX-License-Identifier: BSD-3-Clause
+ // Splitting the different head dimensions to different files to speed up compilation.
+ // This file is auto-generated. See "generate_kernels.py"
+ 
+diff --git a/csrc/flash_attn/src/generate_kernels.py b/csrc/flash_attn/src/generate_kernels.py
+index 119e349..e303beb 100644
+--- a/csrc/flash_attn/src/generate_kernels.py
++++ b/csrc/flash_attn/src/generate_kernels.py
+@@ -1,4 +1,7 @@
+ # Copied from Driss Guessous's PR in PyTorch: https://github.com/pytorch/pytorch/pull/105602
++# Copyright (c) PyTorch contributors.
++# Copyright (c) 2022-2024 Tri Dao and contributors.
++# SPDX-License-Identifier: BSD-3-Clause
+ 
+ # This file is run to generate the kernel instantiations for the flash_attn kernels
+ # They are written to several files in order to speed up compilation
+diff --git a/csrc/flash_attn/src/hardware_info.h b/csrc/flash_attn/src/hardware_info.h
+index b218a29..d4a5a70 100644
+--- a/csrc/flash_attn/src/hardware_info.h
++++ b/csrc/flash_attn/src/hardware_info.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/kernel_traits.h b/csrc/flash_attn/src/kernel_traits.h
+index d415fea..211cc34 100644
+--- a/csrc/flash_attn/src/kernel_traits.h
++++ b/csrc/flash_attn/src/kernel_traits.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/mask.h b/csrc/flash_attn/src/mask.h
+index 4684208..b70d453 100644
+--- a/csrc/flash_attn/src/mask.h
++++ b/csrc/flash_attn/src/mask.h
+@@ -1,5 +1,7 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++ * SPDX-License-Identifier: BSD-3-Clause AND Apache-2.0
+  ******************************************************************************/
+ 
+ #pragma once
+@@ -222,12 +224,18 @@ struct Mask {
+     };
+ 
+     // Causal_mask: whether this particular iteration needs causal masking
++    // causal_k_offset: right-alignment offset so the last query sees all keys
++    //   (= actual_seqlen_k - (orig_seqlen_q - stride + 1) / stride).
++    //   Zero when k_len matches the default stride-16 compressed q_len.
+     template <bool Causal_mask=false, bool Is_even_MN=true, typename Engine, typename Layout>
+     __forceinline__ __device__ void apply_mask_stage1(Tensor<Engine, Layout> &tensor_,
+                                                const int col_idx_offset_,
+                                                const int row_idx_offset,
+                                                const int warp_row_stride,
+-                                               const int stride = 16) {
++                                               const int stride = 16,
++                                               const int causal_k_offset = 0,
++                                               const int query_row_offset = 0,
++                                               const bool kl_teacher_mode = false) {
+         static_assert(!(Causal_mask && Is_local), "Cannot be both causal and local");
+         static_assert(Layout::rank == 3, "Only support 3D Tensor");
+         static_assert(decltype(size<0>(tensor_))::value == 4, "First dimension must be 4");
+@@ -268,26 +276,16 @@ struct Mask {
+                         const int row_idx = row_idx_base + i * 8;
+                         
+                         const int orig_row_idx = row_idx / this->m_block_dim;
+-                        const int orig_max_seqlen_q = max_seqlen_q / this->m_block_dim;
+-
+-                        // 计算压缩后的max_seqlen_q
+-                        const int compress_stride = stride;
+-                        const int compressed_max_seqlen_q = (orig_max_seqlen_q - compress_stride + 1 ) / compress_stride;
+-                        const int compressed_row_idx = (orig_row_idx - stride + 1) / stride;
+-                        int _max_seqlen_k = max_seqlen_k; // compressed lse的时候max_seqlen_k是压缩后的长度
+-                        const int offset_row_idx = std::max(0, (orig_row_idx + 1) / stride - 1 + _max_seqlen_k - compressed_max_seqlen_q);
+-                        
+-                        const int col_idx_limit_left = std::max(0, (orig_row_idx - stride + 1) / stride - window_size_left);
+-                        const int col_idx_limit_right = std::min(_max_seqlen_k, (offset_row_idx + window_size_right));
+-                        // const int col_idx_limit_right = std::min(max_seqlen_k, (orig_row_idx - stride + 1) / stride + window_size_right);
+-                        
+-                        // if (cute::thread0()) {
+-                        // if (stride == 64) {
+-                            // printf("orig_row_idx = %d, orig_max_seqlen_q = %d, compressed_max_seqlen_q = %d, compressed_row_idx = %d, _max_seqlen_k = %d, offset_row_idx = %d, col_idx_limit_left = %d, col_idx_limit_right = %d\n", orig_row_idx, orig_max_seqlen_q, compressed_max_seqlen_q, compressed_row_idx, _max_seqlen_k, offset_row_idx, col_idx_limit_left, col_idx_limit_right);
+-                        // }
+-                        // }
+-                        // flash::cp_async_wait<0>(); __syncthreads();
++                        const int logical_row_idx = orig_row_idx + query_row_offset;
++                        const int teacher_col_idx = logical_row_idx / stride;
++                        const int teacher_col_idx_exclusive = teacher_col_idx + 1;
+ 
++                        const int col_idx_limit_left = kl_teacher_mode
++                            ? std::max(0, teacher_col_idx - window_size_left)
++                            : std::max(0, (orig_row_idx - stride + 1) / stride + causal_k_offset - window_size_left);
++                        const int col_idx_limit_right = kl_teacher_mode
++                            ? std::min(max_seqlen_k, teacher_col_idx_exclusive + window_size_right)
++                            : std::min(max_seqlen_k, (orig_row_idx - stride + 1) / stride + causal_k_offset + window_size_right);
+                         #pragma unroll
+                         for (int nj = 0; nj < size<1, 1>(tensor); ++nj) {
+                             const int col_idx_base = col_idx_offset + nj * 8;
+@@ -337,4 +335,3 @@ struct Mask {
+ };
+ 
+ } // namespace flash
+-
+diff --git a/csrc/flash_attn/src/philox.cuh b/csrc/flash_attn/src/philox.cuh
+index cd7e4d2..ff0f830 100644
+--- a/csrc/flash_attn/src/philox.cuh
++++ b/csrc/flash_attn/src/philox.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from FlashAttention (https://github.com/Dao-AILab/flash-attention).
++// Copyright (c) 2022-2024 Tri Dao and contributors.
++// SPDX-License-Identifier: BSD-3-Clause
++
+ // Pytorch also has an implementation of Philox RNG: https://github.com/pytorch/pytorch/blob/8ca3c881db3e3510fcb7725389f6a0633c9b992c/torch/csrc/jit/tensorexpr/cuda_random.h
+ #pragma once
+ // Philox CUDA.
+diff --git a/csrc/flash_attn/src/philox_unpack.cuh b/csrc/flash_attn/src/philox_unpack.cuh
+index 3a54f45..e405cd7 100644
+--- a/csrc/flash_attn/src/philox_unpack.cuh
++++ b/csrc/flash_attn/src/philox_unpack.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from FlashAttention (https://github.com/Dao-AILab/flash-attention).
++// Copyright (c) 2022-2024 Tri Dao and contributors.
++// SPDX-License-Identifier: BSD-3-Clause
++
+ // This is purely so that it works with torch 2.1. For torch 2.2+ we can include ATen/cuda/PhiloxUtils.cuh
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/rotary.h b/csrc/flash_attn/src/rotary.h
+index 7f1614a..541ca0b 100644
+--- a/csrc/flash_attn/src/rotary.h
++++ b/csrc/flash_attn/src/rotary.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/softmax.h b/csrc/flash_attn/src/softmax.h
+index d420f75..03bf9df 100644
+--- a/csrc/flash_attn/src/softmax.h
++++ b/csrc/flash_attn/src/softmax.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2024, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/flash_attn/src/static_switch.h b/csrc/flash_attn/src/static_switch.h
+index c2b2ea9..fe5403a 100644
+--- a/csrc/flash_attn/src/static_switch.h
++++ b/csrc/flash_attn/src/static_switch.h
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from FlashAttention (https://github.com/Dao-AILab/flash-attention).
++// Copyright (c) 2022-2024 Tri Dao and contributors.
++// SPDX-License-Identifier: BSD-3-Clause
++
+ // Inspired by
+ // https://github.com/NVIDIA/DALI/blob/main/include/dali/core/static_switch.h
+ // and https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/Dispatch.h
+@@ -84,11 +88,6 @@
+ 
+ #define HEADDIM_SWITCH(HEADDIM, ...)   \
+   [&] {                                    \
+-    if (HEADDIM == 64) {                   \
+-      constexpr static int kHeadDim = 64;  \
+-      return __VA_ARGS__();                \
+-    } else {                               \
+       constexpr static int kHeadDim = 128; \
+       return __VA_ARGS__();                \
+-    }                                      \
+   }()
+diff --git a/csrc/flash_attn/src/utils.h b/csrc/flash_attn/src/utils.h
+index b7408ec..5078a60 100644
+--- a/csrc/flash_attn/src/utils.h
++++ b/csrc/flash_attn/src/utils.h
+@@ -1,5 +1,6 @@
+ /******************************************************************************
+  * Copyright (c) 2023, Tri Dao.
++ * SPDX-License-Identifier: BSD-3-Clause
+  ******************************************************************************/
+ 
+ #pragma once
+diff --git a/csrc/get_probs.cuh b/csrc/get_probs.cuh
+index 34c21fa..b0bd881 100644
+--- a/csrc/get_probs.cuh
++++ b/csrc/get_probs.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cuda_runtime.h>
+ #include "utils.cuh"
+diff --git a/csrc/max_pooling_1d.cuh b/csrc/max_pooling_1d.cuh
+index 871c3cf..4ee7371 100644
+--- a/csrc/max_pooling_1d.cuh
++++ b/csrc/max_pooling_1d.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cuda_runtime.h>
+ #include "utils.cuh"
+@@ -17,6 +21,7 @@ __global__ void max_pooling_1d_varlen_kernel(
+     const int* cache_lens,    // cache lengths for each batch [batch_size]
+     int batch_size,
+     int num_heads,
++    int total_q,
+     int max_seqlen_q,
+     int max_seqlen_k,
+     int out_len,
+@@ -64,11 +69,18 @@ __global__ void max_pooling_1d_varlen_kernel(
+     // Calculate input and output pointers
+     // Input is packed: [num_heads, total_q, max_k]
+     // We need to access the k values for this specific query
+-    size_t total_q_all = cu_seqlens_q[batch_size]; 
+-    size_t in_offset = (size_t)bidh * total_q_all * (size_t)max_seqlen_k + (size_t)bidq_global * (size_t)max_seqlen_k;
+-    const T* in = input + in_offset;
+-    size_t out_offset = (size_t)bidh * total_q_all * (size_t)out_len + (size_t)bidq_global * (size_t)out_len;
+-    T* out = output + out_offset;
++    // B=4 at 128K already exceeds INT32_MAX elements in the per-head score
++    // plane. Promote the products before pointer arithmetic; otherwise head 1
++    // wraps around and corrupts the following allocation.
++    const int64_t total_q_i64 = static_cast<int64_t>(total_q);
++    const int64_t input_offset =
++        static_cast<int64_t>(bidh) * total_q_i64 * max_seqlen_k
++        + static_cast<int64_t>(bidq_global) * max_seqlen_k;
++    const int64_t output_offset =
++        static_cast<int64_t>(bidh) * total_q_i64 * out_len
++        + static_cast<int64_t>(bidq_global) * out_len;
++    const T* in = input + input_offset;
++    T* out = output + output_offset;
+     
+     // Calculate query block index for masking
+     int cache_len = cache_lens[batch_idx];  // Get cache_len for this batch
+@@ -174,6 +186,7 @@ void max_pooling_1d_varlen_func(
+     const int* cache_lens,
+     int batch_size,
+     int num_heads,
++    int total_q,
+     int max_seqlen_q,
+     int max_seqlen_k,
+     int out_len,
+@@ -186,18 +199,12 @@ void max_pooling_1d_varlen_func(
+ ) {
+     const int threads_per_block = 256;
+     
+-    // Total number of queries across all batches
+-    int total_q;
+-    cudaMemcpyAsync(&total_q, &cu_seqlens_q[batch_size], sizeof(int), 
+-                    cudaMemcpyDeviceToHost, stream);
+-    cudaStreamSynchronize(stream);
+-    
+     dim3 grid(total_q, num_heads);
+     dim3 block(threads_per_block, 1);
+     
+     max_pooling_1d_varlen_kernel<<<grid, block, 0, stream>>>(
+-        input, output, cu_seqlens_q, cu_seqlens_k, cache_lens, batch_size, num_heads, 
+-        max_seqlen_q, max_seqlen_k, out_len, kernel_size, stride, padding, block_size, local_blocks, init_blocks
++        input, output, cu_seqlens_q, cu_seqlens_k, cache_lens, batch_size, num_heads,
++        total_q, max_seqlen_q, max_seqlen_k, out_len, kernel_size, stride, padding, block_size, local_blocks, init_blocks
+     );
+ }
+ 
+@@ -227,4 +234,4 @@ void max_pooling_1d_func(
+     max_pooling_1d_kernel<<<grid, block, 0, stream>>>(
+         input, output, num_heads, q_len, k_len, out_len, cache_len, kernel_size, stride, padding, block_size, local_blocks, init_blocks
+     );
+-} 
++}
+diff --git a/csrc/topk.cuh b/csrc/topk.cuh
+index 89ff74b..19cb719 100644
+--- a/csrc/topk.cuh
++++ b/csrc/topk.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cuda_runtime.h>
+ #include "utils.cuh"
+diff --git a/csrc/topk_to_uint64.cuh b/csrc/topk_to_uint64.cuh
+index 6e5b906..4d9291c 100644
+--- a/csrc/topk_to_uint64.cuh
++++ b/csrc/topk_to_uint64.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cuda_runtime.h>
+ #include "utils.cuh"
+diff --git a/csrc/trait.cuh b/csrc/trait.cuh
+index 09525a1..bcd8429 100644
+--- a/csrc/trait.cuh
++++ b/csrc/trait.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cuda_runtime.h>
+ #include <cuda_fp16.h>
+diff --git a/csrc/uint64_to_bool.cuh b/csrc/uint64_to_bool.cuh
+index 5e81fed..a83bf85 100644
+--- a/csrc/uint64_to_bool.cuh
++++ b/csrc/uint64_to_bool.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cuda_runtime.h>
+ #include "utils.cuh"
+diff --git a/csrc/utils.cuh b/csrc/utils.cuh
+index ead0d37..3ed75c4 100644
+--- a/csrc/utils.cuh
++++ b/csrc/utils.cuh
+@@ -1,3 +1,7 @@
++// This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++// Copyright (c) OpenBMB.
++// SPDX-License-Identifier: Apache-2.0
++
+ #pragma once
+ #include <cmath>
+ #include <cstdio>
+diff --git a/infllm_v2/__init__.py b/infllm_v2/__init__.py
+index 4b19d77..8f7bce5 100644
+--- a/infllm_v2/__init__.py
++++ b/infllm_v2/__init__.py
+@@ -1,4 +1,9 @@
+-__version__ = "0.1.0"
++# This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++# Copyright (c) OpenBMB.
++# Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++# SPDX-License-Identifier: Apache-2.0
++
++__version__ = "0.128"
+ 
+ from .blockmask_to_uint64 import blockmask_to_uint64
+ from .topk_to_uint64 import topk_to_uint64
+@@ -7,5 +12,7 @@ from .max_pooling_1d import max_pooling_1d, max_pooling_1d_varlen
+ from .infllmv2_sparse_attention import (
+     infllmv2_attn_varlen_func,
+     infllmv2_attn_stage1,
++    infllmv2_attn_stage1_fast,
++    infllmv2_attn_stage1_kl_teacher,
+     infllmv2_attn_with_kvcache,
+ )
+diff --git a/infllm_v2/blockmask_to_uint64.py b/infllm_v2/blockmask_to_uint64.py
+index 6f8bb01..c858dca 100644
+--- a/infllm_v2/blockmask_to_uint64.py
++++ b/infllm_v2/blockmask_to_uint64.py
+@@ -1,3 +1,7 @@
++# This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++# Copyright (c) OpenBMB.
++# SPDX-License-Identifier: Apache-2.0
++
+ import torch
+ from typing import Tuple
+ from . import C
+diff --git a/infllm_v2/infllmv2_sparse_attention.py b/infllm_v2/infllmv2_sparse_attention.py
+index ab41851..aff3799 100644
+--- a/infllm_v2/infllmv2_sparse_attention.py
++++ b/infllm_v2/infllmv2_sparse_attention.py
+@@ -1,4 +1,6 @@
+ # Copyright (c) 2023, Tri Dao.
++# Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++# SPDX-License-Identifier: BSD-3-Clause AND Apache-2.0
+ 
+ from typing import Optional, Sequence, Tuple, Union
+ 
+@@ -118,9 +120,12 @@ def _infllmv2_attn_varlen_forward(
+         None,
+         fwd_blockmask_uint64,
+     )
+-    # if out.isnan().any() or softmax_lse.isnan().any():
+-    #     breakpoint()
+     if topk_idx is not None:
++        # The grouped sparse path materializes a head-reordered Q. At 256K,
++        # B=4 this temporary is 8 GiB and is dead once the CUDA kernel returns.
++        # Drop it before allocating the equally sized output reorder; PyTorch's
++        # stream-aware allocator can safely reuse the storage.
++        del q
+         # Reshape output back to original dimensions
+         if nheads_k == 1:
+             # Direct reshape for MQA - no transpose needed
+@@ -132,8 +137,71 @@ def _infllmv2_attn_varlen_forward(
+     return out, softmax_lse, S_dmask, fwd_blockmask_uint64, rng_state
+ 
+ 
++@_torch_register_fake_wrapper("infllmv2_attn::_infllmv2_attn_varlen_forward")
++def _infllmv2_attn_varlen_forward_fake(
++    q: torch.Tensor,
++    k: torch.Tensor,
++    v: torch.Tensor,
++    cu_seqlens_q: torch.Tensor,
++    cu_seqlens_k: torch.Tensor,
++    max_seqlen_q: int,
++    max_seqlen_k: int,
++    dropout_p: float,
++    softmax_scale: float,
++    causal: bool,
++    window_size_left: int = -1,
++    window_size_right: int = -1,
++    softcap: float = 0.0,
++    alibi_slopes: Optional[torch.Tensor] = None,
++    return_softmax: bool = False,
++    block_table: Optional[torch.Tensor] = None,
++    leftpad_k: Optional[torch.Tensor] = None,
++    seqused_k: Optional[torch.Tensor] = None,
++    topk_idx: Optional[torch.Tensor] = None,
++) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
++    """Fake implementation for torch.compile tracing."""
++    # Get dimensions
++    total_q = q.shape[0]
++    nheads_q = q.shape[1]
++    nheads_k = k.shape[1]
++    head_dim = q.shape[2]
++    total_k = k.shape[0]
++    
++    # When topk_idx is provided, q is reshaped for GQA/MQA handling
++    # Output shape matches reshaped q
++    if topk_idx is not None:
++        # After GQA reshaping in the actual impl, output shape is (total_q_adjusted, nheads_k, head_dim)
++        # But we return it reshaped back to original (total_q, nheads_q, head_dim)
++        out = torch.empty((total_q, nheads_q, head_dim), dtype=q.dtype, device=q.device)
++    else:
++        out = torch.empty((total_q, nheads_q, head_dim), dtype=q.dtype, device=q.device)
++    
++    # softmax_lse shape: (nheads, total_q) - but actual kernel returns different shape
++    # For varlen, it's typically (batch_size, nheads, max_seqlen_q) but packed as (nheads, total_q)
++    softmax_lse = torch.empty((nheads_q, total_q), dtype=torch.float32, device=q.device)
++    
++    # S_dmask is only returned if return_softmax=True and dropout_p > 0
++    S_dmask = torch.empty(0, dtype=q.dtype, device=q.device)
++    
++    # fwd_blockmask_uint64: shape depends on topk_idx
++    if topk_idx is not None:
++        # Block mask is created from topk_idx
++        n_blocks = (max_seqlen_k + 63) // 64
++        fwd_blockmask_uint64 = torch.empty((topk_idx.shape[0], n_blocks), dtype=torch.uint64, device=q.device)
++    else:
++        fwd_blockmask_uint64 = torch.empty(0, dtype=torch.uint64, device=q.device)
++    
++    # rng_state for dropout
++    rng_state = torch.empty(2, dtype=torch.int64, device=q.device)
++    
++    return out, softmax_lse, S_dmask, fwd_blockmask_uint64, rng_state
+ 
+-_wrapped_infllmv2_attn_varlen_forward = _infllmv2_attn_varlen_forward
++
++# Wrap for torch.compile compatibility (PyTorch >= 2.4)
++if torch.__version__ >= "2.4.0":
++    _wrapped_infllmv2_attn_varlen_forward = torch.ops.infllmv2_attn._infllmv2_attn_varlen_forward
++else:
++    _wrapped_infllmv2_attn_varlen_forward = _infllmv2_attn_varlen_forward
+ 
+ 
+ @_torch_custom_op_wrapper("infllmv2_attn::_infllmv2_attn_varlen_backward", mutates_args=("dq", "dk", "dv"), device_types="cuda")
+@@ -189,10 +257,6 @@ def _infllmv2_attn_varlen_backward(
+         out_final = out.reshape(total_q, nheads_k, group_size, dim)
+         out_final = out_final.permute(0, 2, 1, 3)
+         out_final = out_final.reshape(total_q * group_size, nheads_k, dim).contiguous()
+-    # q = q.reshape(-1, 16, 2, head_dim).reshape(-1, 2, head_dim)
+-    # breakpoint()
+-    # with open("/user/luopeiyan/a/Block-Sparse-Attention/tests/after_q_output_flash_attn_varlen_forward.txt", "a+") as f:
+-    #     f.write(str(q) + "\n") 
+     # Reduce memory by computing cu_seqlens_q_expanded in-place
+     if nheads_k == 1:
+         # For MQA, multiply by nheads_q
+@@ -264,6 +328,36 @@ def _infllmv2_attn_varlen_backward(
+     return softmax_d
+ 
+ 
++@_torch_register_fake_wrapper("infllmv2_attn::_infllmv2_attn_varlen_backward")
++def _infllmv2_attn_varlen_backward_fake(
++    dout: torch.Tensor,
++    q: torch.Tensor,
++    k: torch.Tensor,
++    v: torch.Tensor,
++    out: torch.Tensor,
++    softmax_lse: torch.Tensor,
++    dq: Optional[torch.Tensor],
++    dk: Optional[torch.Tensor],
++    dv: Optional[torch.Tensor],
++    cu_seqlens_q: torch.Tensor,
++    cu_seqlens_k: torch.Tensor,
++    max_seqlen_q: int,
++    max_seqlen_k: int,
++    dropout_p: float,
++    softmax_scale: float,
++    causal: bool,
++    window_size_left: int,
++    window_size_right: int,
++    softcap: float,
++    alibi_slopes: Optional[torch.Tensor],
++    deterministic: bool,
++    bwd_blockmask_uint64: Optional[torch.Tensor] = None,
++    rng_state: Optional[torch.Tensor] = None,
++) -> torch.Tensor:
++    """Fake implementation for torch.compile tracing of backward pass."""
++    # softmax_d has shape (batch_size, nheads, max_seqlen_q) but packed
++    # For simplicity, return a scalar tensor (the actual value doesn't matter for tracing)
++    return torch.empty((), dtype=torch.float32, device=q.device)
+ 
+ 
+ if torch.__version__ >= "2.4.0":
+@@ -480,6 +574,174 @@ def infllmv2_attn_varlen_func(
+     )
+ 
+ 
++@_torch_custom_op_wrapper("infllmv2_attn::_infllmv2_attn_stage1_inner", mutates_args=(), device_types="cuda")
++def _infllmv2_attn_stage1_inner(
++    q: torch.Tensor,
++    k: torch.Tensor,
++    v: torch.Tensor,
++    cu_seqlens_q: torch.Tensor,
++    cu_seqlens_k: torch.Tensor,
++    cu_seqlens_v: torch.Tensor,
++    max_seqlen_q: int,
++    max_seqlen_k: int,
++    dropout_p: float,
++    softmax_scale: float,
++    causal: bool,
++    window_size_left: int,
++    window_size_right: int,
++    softcap: float,
++    alibi_slopes: Optional[torch.Tensor] = None,
++    block_table: Optional[torch.Tensor] = None,
++) -> torch.Tensor:
++    """Inner custom op for stage1 attention - torch.compile compatible."""
++    result = infllm_cuda.varlen_fwd_stage1(
++        q,
++        k,
++        v,
++        None,
++        cu_seqlens_q,
++        cu_seqlens_k,
++        cu_seqlens_v,
++        None,
++        None,
++        block_table,
++        alibi_slopes,
++        max_seqlen_q,
++        max_seqlen_k,
++        dropout_p,
++        softmax_scale,
++        True,
++        causal,
++        window_size_left,
++        window_size_right,
++        softcap,
++        True,
++        None,
++    )
++    S_dmask = result[0] if isinstance(result, list) else result
++    return S_dmask
++
++
++@_torch_register_fake_wrapper("infllmv2_attn::_infllmv2_attn_stage1_inner")
++def _infllmv2_attn_stage1_inner_fake(
++    q: torch.Tensor,
++    k: torch.Tensor,
++    v: torch.Tensor,
++    cu_seqlens_q: torch.Tensor,
++    cu_seqlens_k: torch.Tensor,
++    cu_seqlens_v: torch.Tensor,
++    max_seqlen_q: int,
++    max_seqlen_k: int,
++    dropout_p: float,
++    softmax_scale: float,
++    causal: bool,
++    window_size_left: int,
++    window_size_right: int,
++    softcap: float,
++    alibi_slopes: Optional[torch.Tensor] = None,
++    block_table: Optional[torch.Tensor] = None,
++) -> torch.Tensor:
++    """Fake implementation for torch.compile tracing."""
++    # q shape after reshape: (total_q_adjusted, nheads_k, head_dim)
++    # Output shape: (nheads_k, total_q_adjusted, seqlen_k_rounded)
++    total_q_adjusted = q.shape[0]
++    nheads_k = k.shape[1]
++    # Round seqlen_k to multiple of 128 (matching CUDA kernel behavior)
++    seqlen_k_rounded = (max_seqlen_k + 127) // 128 * 128
++    return torch.empty((nheads_k, total_q_adjusted // 16, seqlen_k_rounded), 
++                       dtype=q.dtype, device=q.device)
++
++
++@_torch_custom_op_wrapper("infllmv2_attn::_infllmv2_attn_stage1_kl_teacher_inner", mutates_args=(), device_types="cuda")
++def _infllmv2_attn_stage1_kl_teacher_inner(
++    q: torch.Tensor,
++    k: torch.Tensor,
++    v: torch.Tensor,
++    cu_seqlens_q: torch.Tensor,
++    cu_seqlens_k: torch.Tensor,
++    cu_seqlens_v: torch.Tensor,
++    max_seqlen_q: int,
++    max_seqlen_k: int,
++    dropout_p: float,
++    softmax_scale: float,
++    causal: bool,
++    causal_stride: int,
++    query_offset: int,
++    window_size_left: int,
++    window_size_right: int,
++    softcap: float,
++    alibi_slopes: Optional[torch.Tensor] = None,
++    block_table: Optional[torch.Tensor] = None,
++) -> torch.Tensor:
++    """Inner custom op for KL-teacher stage1 attention."""
++    result = infllm_cuda.varlen_fwd_stage1_kl_teacher(
++        q,
++        k,
++        v,
++        None,
++        cu_seqlens_q,
++        cu_seqlens_k,
++        cu_seqlens_v,
++        None,
++        None,
++        block_table,
++        alibi_slopes,
++        max_seqlen_q,
++        max_seqlen_k,
++        dropout_p,
++        softmax_scale,
++        True,
++        causal,
++        window_size_left,
++        window_size_right,
++        softcap,
++        True,
++        None,
++        causal_stride,
++        query_offset,
++    )
++    S_dmask = result[0] if isinstance(result, list) else result
++    return S_dmask
++
++
++@_torch_register_fake_wrapper("infllmv2_attn::_infllmv2_attn_stage1_kl_teacher_inner")
++def _infllmv2_attn_stage1_kl_teacher_inner_fake(
++    q: torch.Tensor,
++    k: torch.Tensor,
++    v: torch.Tensor,
++    cu_seqlens_q: torch.Tensor,
++    cu_seqlens_k: torch.Tensor,
++    cu_seqlens_v: torch.Tensor,
++    max_seqlen_q: int,
++    max_seqlen_k: int,
++    dropout_p: float,
++    softmax_scale: float,
++    causal: bool,
++    causal_stride: int,
++    query_offset: int,
++    window_size_left: int,
++    window_size_right: int,
++    softcap: float,
++    alibi_slopes: Optional[torch.Tensor] = None,
++    block_table: Optional[torch.Tensor] = None,
++) -> torch.Tensor:
++    """Fake implementation for KL-teacher stage1 tracing."""
++    total_q_adjusted = q.shape[0]
++    nheads_k = k.shape[1]
++    seqlen_k_rounded = (max_seqlen_k + 127) // 128 * 128
++    return torch.empty((nheads_k, total_q_adjusted // 16, seqlen_k_rounded),
++                       dtype=q.dtype, device=q.device)
++
++
++# Wrap for torch.compile compatibility (PyTorch >= 2.4)
++if torch.__version__ >= "2.4.0":
++    _wrapped_infllmv2_attn_stage1_inner = torch.ops.infllmv2_attn._infllmv2_attn_stage1_inner
++    _wrapped_infllmv2_attn_stage1_kl_teacher_inner = torch.ops.infllmv2_attn._infllmv2_attn_stage1_kl_teacher_inner
++else:
++    _wrapped_infllmv2_attn_stage1_inner = _infllmv2_attn_stage1_inner
++    _wrapped_infllmv2_attn_stage1_kl_teacher_inner = _infllmv2_attn_stage1_kl_teacher_inner
++
++
+ def infllmv2_attn_stage1(
+     q,
+     k,
+@@ -506,6 +768,8 @@ def infllmv2_attn_stage1(
+     with a specific sparsity pattern where queries are grouped and only attend
+     to a subset of keys.
+     
++    Now torch.compile compatible via custom_op registration.
++    
+     Arguments:
+         q: (total_q, nheads, headdim), where total_q = total number of query tokens in the batch.
+         k: (total_k, nheads_k, headdim), where total_k = total number of key tokens in the batch.
+@@ -530,8 +794,6 @@ def infllmv2_attn_stage1(
+         deterministic: bool. Whether to use the deterministic implementation.
+         return_attn_probs: bool. Whether to return the attention probabilities.
+         block_table: Optional block table for paged attention.
+-        nsa_group_size: int. Number of groups for neighborhood sparse attention.
+-        nsa_heads_per_group: int. Number of heads per group.
+         
+     Return:
+         S_dmask: The attention scores/probabilities matrix with NSA sparsity pattern.
+@@ -558,7 +820,70 @@ def infllmv2_attn_stage1(
+     cu_seqlens_q_adjusted = cu_seqlens_q * nheads_per_group
+     max_seqlen_q_adjusted = max_seqlen_q * nheads_per_group
+ 
+-    # Call the underlying CUDA kernel
++    # Call the torch.compile compatible inner function
++    S_dmask = _wrapped_infllmv2_attn_stage1_inner(
++        q,
++        k,
++        v,
++        cu_seqlens_q_adjusted,
++        cu_seqlens_k,
++        cu_seqlens_v,
++        max_seqlen_q_adjusted,
++        max_seqlen_k,
++        dropout_p,
++        softmax_scale,
++        causal,
++        window_size[0],
++        window_size[1],
++        softcap,
++        alibi_slopes,
++        block_table,
++    )
++    
++    S_dmask = S_dmask[:,:, :max_seqlen_k]
++    S_dmask = torch.where(torch.isnan(S_dmask), 0, S_dmask)
++    
++    return S_dmask
++
++
++def infllmv2_attn_stage1_fast(
++    q,
++    k,
++    v,
++    cu_seqlens_q,
++    cu_seqlens_k,
++    max_seqlen_q,
++    max_seqlen_k,
++    dropout_p=0.0,
++    softmax_scale=None,
++    causal=False,
++    window_size=(-1, -1),  # -1 means infinite context window
++    softcap=0.0,  # 0.0 means deactivated
++    alibi_slopes=None,
++    deterministic=False,
++    return_attn_probs=True,
++    block_table=None,
++):
++    """Legacy stage1 API for NOSA/NOSI inference.
++
++    This preserves the older wrapper behavior by calling the raw stage1 kernel
++    path directly, without the repo wrapper's output sanitization or
++    `cu_seqlens_v` requirement.
++    """
++    del deterministic, return_attn_probs
++    if softmax_scale is None:
++        softmax_scale = q.shape[-1] ** (-0.5)
++
++    total_q, nheads, head_dim = q.shape
++    nheads_k = k.shape[1]
++    nheads_per_group = nheads // nheads_k
++
++    q = q.view(total_q, nheads_k, nheads_per_group, head_dim)
++    q = q.permute(0, 2, 1, 3).reshape(total_q * nheads_per_group, nheads_k, head_dim)
++
++    cu_seqlens_q_adjusted = cu_seqlens_q * nheads_per_group
++    max_seqlen_q_adjusted = max_seqlen_q * nheads_per_group
++
+     result = infllm_cuda.varlen_fwd_stage1(
+         q,
+         k,
+@@ -566,7 +891,7 @@ def infllmv2_attn_stage1(
+         None,
+         cu_seqlens_q_adjusted,
+         cu_seqlens_k,
+-        cu_seqlens_v,
++        cu_seqlens_k,
+         None,
+         None,
+         block_table,
+@@ -583,29 +908,150 @@ def infllmv2_attn_stage1(
+         True,
+         None,
+     )
+-    
+-    S_dmask = result[0] if isinstance(result, list) else result
+-    S_dmask = S_dmask[:,:, :max_seqlen_k]
++    return result[0] if isinstance(result, list) else result
++
++
++def infllmv2_attn_stage1_kl_teacher(
++    q,
++    k,
++    v,
++    cu_seqlens_q,
++    cu_seqlens_k,
++    cu_seqlens_v,
++    max_seqlen_q,
++    max_seqlen_k,
++    causal_stride,
++    query_offset=0,
++    dropout_p=0.0,
++    softmax_scale=None,
++    causal=False,
++    window_size=(-1, -1),
++    softcap=0.0,
++    alibi_slopes=None,
++    deterministic=False,
++    return_attn_probs=True,
++    block_table=None,
++):
++    """
++    Training-only KL-teacher stage1.
++
++    This matches the exact teacher's causal semantics for compressed keys whose
++    starts advance by ``causal_stride`` and supports chunked queries via
++    ``query_offset``.
++    """
++    del deterministic, return_attn_probs
++    if softmax_scale is None:
++        softmax_scale = q.shape[-1] ** (-0.5)
++
++    q, k, v = [maybe_contiguous(x) for x in (q, k, v)]
++
++    total_q, nheads, head_dim = q.shape
++    nheads_k = k.shape[1]
++    nheads_per_group = nheads // nheads_k
++
++    q = q.reshape(total_q, nheads_k, nheads_per_group, head_dim)
++    q = q.transpose(1, 2).reshape(total_q * nheads_per_group, nheads_k, head_dim).contiguous()
++
++    cu_seqlens_q_adjusted = cu_seqlens_q * nheads_per_group
++    max_seqlen_q_adjusted = max_seqlen_q * nheads_per_group
++
++    S_dmask = _wrapped_infllmv2_attn_stage1_kl_teacher_inner(
++        q,
++        k,
++        v,
++        cu_seqlens_q_adjusted,
++        cu_seqlens_k,
++        cu_seqlens_v,
++        max_seqlen_q_adjusted,
++        max_seqlen_k,
++        dropout_p,
++        softmax_scale,
++        causal,
++        causal_stride,
++        query_offset,
++        window_size[0],
++        window_size[1],
++        softcap,
++        alibi_slopes,
++        block_table,
++    )
++
++    S_dmask = S_dmask[:, :, :max_seqlen_k]
+     S_dmask = torch.where(torch.isnan(S_dmask), 0, S_dmask)
+-    # if return_attn_probs and S_dmask is not None:
+-    #     # The kernel now returns shape (num_heads_k, total_q, max_seqlen_k)
+-    #     assert S_dmask.shape == (nheads_k, total_q, max_seqlen_k), \
+-    #         f"Expected shape ({nheads_k}, {total_q}, {max_seqlen_k}), got {S_dmask.shape}"
+-        # TODO causal masking with first block -inf
+-        # Apply causal masking if needed
+-        # if causal:
+-        #     # Calculate the stride for masking
+-        #     stride = nsa_heads_per_group * nsa_group_size
+-        #     mask_size = stride - 1
+-            
+-            # Apply masking based on the output shape
+-            # S_dmask shape is (num_heads_k, total_q, max_seqlen_k)
+-            # if S_dmask.shape[1] > mask_size:  # total_q dimension
+-            #     S_dmask[:, :mask_size, :] = float('-inf')
+-    
+     return S_dmask
+ 
+ 
++@_torch_custom_op_wrapper("infllmv2_attn::_fwd_kvcache", mutates_args=(), device_types="cuda")
++def _infllmv2_fwd_kvcache_inner(
++    q: torch.Tensor,
++    k_cache: torch.Tensor,
++    v_cache: torch.Tensor,
++    cache_seqlens: torch.Tensor,
++    softmax_scale: float,
++    causal: bool,
++    window_size_left: int,
++    window_size_right: int,
++    topk_idx: Optional[torch.Tensor] = None,
++) -> torch.Tensor:
++    """Inner custom op for fwd_kvcache - torch.compile compatible (simplified for gpt-fast)."""
++    q = maybe_contiguous(q)
++    
++    if topk_idx is not None:
++        assert topk_idx.dtype == torch.int32
++        blockmask, _ = cuda_topk_to_uint64(topk_idx, k_cache.shape[1], 64)
++    else:
++        blockmask = None
++    
++    out, _ = infllm_cuda.fwd_kvcache(
++        q,
++        k_cache,
++        v_cache,
++        None,  # k
++        None,  # v
++        cache_seqlens,
++        None,  # rotary_cos
++        None,  # rotary_sin
++        None,  # cache_batch_idx
++        None,  # cache_leftpad
++        None,  # block_table
++        None,  # alibi_slopes
++        None,  # out
++        softmax_scale,
++        causal,
++        window_size_left,
++        window_size_right,
++        0.0,   # softcap
++        True,  # rotary_interleaved
++        0,     # num_splits
++        blockmask,
++    )
++    return out
++
++
++@_torch_register_fake_wrapper("infllmv2_attn::_fwd_kvcache")
++def _infllmv2_fwd_kvcache_fake(
++    q: torch.Tensor,
++    k_cache: torch.Tensor,
++    v_cache: torch.Tensor,
++    cache_seqlens: torch.Tensor,
++    softmax_scale: float,
++    causal: bool,
++    window_size_left: int,
++    window_size_right: int,
++    topk_idx: Optional[torch.Tensor] = None,
++) -> torch.Tensor:
++    """Fake implementation for torch.compile tracing."""
++    # Output has same shape as q
++    return torch.empty_like(q)
++
++
++# Wrap for torch.compile compatibility
++if torch.__version__ >= "2.4.0":
++    _wrapped_fwd_kvcache = torch.ops.infllmv2_attn._fwd_kvcache
++else:
++    _wrapped_fwd_kvcache = _infllmv2_fwd_kvcache_inner
++
++
+ def infllmv2_attn_with_kvcache(
+     q,
+     k_cache,
+@@ -725,6 +1171,27 @@ def infllmv2_attn_with_kvcache(
+             (k_cache.shape[0],), cache_seqlens, dtype=torch.int32, device=k_cache.device
+         )
+         cache_seqlens = maybe_contiguous(cache_seqlens)
++    
++    # Use torch.compile-compatible wrapper for simple case (gpt-fast decode)
++    # This avoids tracing into pybind11 extensions
++    is_simple_case = (
++        k is None and v is None and
++        rotary_cos is None and rotary_sin is None and
++        cache_batch_idx is None and cache_leftpad is None and
++        block_table is None and alibi_slopes is None and
++        softcap == 0.0 and not return_softmax_lse
++    )
++    
++    if is_simple_case:
++        out = _wrapped_fwd_kvcache(
++            q, k_cache, v_cache, cache_seqlens,
++            softmax_scale, causal,
++            window_size[0], window_size[1],
++            topk_idx,
++        )
++        return out
++    
++    # Full path for complex cases (not torch.compile compatible)
+     cache_batch_idx = maybe_contiguous(cache_batch_idx)
+     block_table = maybe_contiguous(block_table)
+     if topk_idx is not None:
+@@ -755,4 +1222,4 @@ def infllmv2_attn_with_kvcache(
+         num_splits,
+         blockmask,
+     )
+-    return (out, softmax_lse) if return_softmax_lse else out
+\ No newline at end of file
++    return (out, softmax_lse) if return_softmax_lse else out
+diff --git a/infllm_v2/max_pooling_1d.py b/infllm_v2/max_pooling_1d.py
+index 27c4c7c..397af39 100644
+--- a/infllm_v2/max_pooling_1d.py
++++ b/infllm_v2/max_pooling_1d.py
+@@ -1,8 +1,15 @@
++# This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++# Copyright (c) OpenBMB.
++# Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++# SPDX-License-Identifier: Apache-2.0
++
+ import torch
++
+ from . import C
+ 
++
+ def max_pooling_1d(
+-    input: torch.Tensor, # num_heads x q_len x k_len
++    input: torch.Tensor,  # num_heads x q_len x k_len
+     cache_len: int,
+     local_blocks: int,
+     init_blocks: int,
+@@ -19,7 +26,9 @@ def max_pooling_1d(
+     k_len = input.shape[2]
+     total_len = q_len + cache_len
+     out_len = (total_len + block_size - 1) // block_size
+-    output = torch.zeros(num_heads, q_len, out_len, device=input.device, dtype=input.dtype)
++    output = torch.zeros(
++        num_heads, q_len, out_len, device=input.device, dtype=input.dtype
++    )
+     with torch.cuda.device(input.device):
+         stream = torch.cuda.current_stream().cuda_stream
+         C.max_pooling_1d(
+@@ -39,28 +48,30 @@ def max_pooling_1d(
+             local_blocks,
+             init_blocks,
+         )
+-    
++
+     # Log device information before return
+     # print(f"max_pooling_1d - input device: {input.device}, output device: {output.device}")
+-    
++
+     return output
+ 
+ 
+ def max_pooling_1d_varlen(
+-    input: torch.Tensor, # num_heads x total_q x max_k
+-    cu_seqlens_q: torch.Tensor, # batch_size + 1
+-    cu_seqlens_k: torch.Tensor, # batch_size + 1
+-    cache_lens: torch.Tensor, # batch_size
++    input: torch.Tensor,  # num_heads x total_q x max_k
++    cu_seqlens_q: torch.Tensor,  # batch_size + 1
++    cu_seqlens_k: torch.Tensor,  # batch_size + 1
++    cache_lens: torch.Tensor,  # batch_size
+     max_seqlen_q: int,
+     max_seqlen_k: int,
+     local_blocks: int,
+     init_blocks: int,
+     block_size: int = 64,
+     stride: int = 16,
++    buf: torch.Tensor = None,
++    max_cache_len: int | None = None,
+ ) -> torch.Tensor:
+     """
+     Variable-length version of max_pooling_1d that handles packed sequences.
+-    
++
+     Args:
+         input: Tensor of shape (num_heads, total_q, max_k) where:
+                - total_q is sum of all query sequence lengths
+@@ -74,7 +85,7 @@ def max_pooling_1d_varlen(
+         init_blocks: Number of initial blocks to mask with inf
+         block_size: Block size (default: 64)
+         stride: Stride for pooling (default: 16)
+-    
++
+     Returns:
+         output: Tensor of shape (num_heads, total_q, out_len)
+     """
+@@ -83,31 +94,52 @@ def max_pooling_1d_varlen(
+     assert cu_seqlens_k.dtype == torch.int32
+     assert cache_lens.dtype == torch.int32
+     assert input.dim() == 3, f"Expected 3D input, got {input.dim()}D"
+-    
++
+     input = input.contiguous()
+     cu_seqlens_q = cu_seqlens_q.contiguous()
+     cu_seqlens_k = cu_seqlens_k.contiguous()
+     cache_lens = cache_lens.contiguous()
+-    
++
+     stride = block_size // stride
+     kernel_size = stride + 1
+     padding = 1
+-    
++
+     batch_size = cu_seqlens_q.shape[0] - 1
+     num_heads = input.shape[0]
+     total_q = input.shape[1]
+-    
+-    # Verify dimensions
+-    assert cu_seqlens_q[-1].item() == total_q, f"total_q mismatch: {cu_seqlens_q[-1].item()} vs {total_q}"
+-    assert input.shape[2] == max_seqlen_k, f"max_k mismatch: {input.shape[2]} vs {max_seqlen_k}"
+-    assert cache_lens.shape[0] == batch_size, f"cache_lens batch size mismatch: {cache_lens.shape[0]} vs {batch_size}"
+-    
++
++    # Verify dimensions without reading CUDA metadata back to the host. The
++    # packed score shape is the authoritative total-query length.
++    assert input.shape[2] == max_seqlen_k, (
++        f"max_k mismatch: {input.shape[2]} vs {max_seqlen_k}"
++    )
++    assert cache_lens.shape[0] == batch_size, (
++        f"cache_lens batch size mismatch: {cache_lens.shape[0]} vs {batch_size}"
++    )
++
+     # Calculate output length based on max sequence length and max cache length
+-    max_cache_len = cache_lens.max().item()
++    if max_cache_len is None:
++        max_cache_len = cache_lens.max().item()
++    max_cache_len = int(max_cache_len)
+     total_len = max_seqlen_q + max_cache_len
+     out_len = (total_len + block_size - 1) // block_size
+-    
+-    output = torch.zeros(num_heads, total_q, out_len, device=input.device, dtype=input.dtype)
++
++    if buf is None:
++        output = torch.zeros(
++            num_heads, total_q, out_len, device=input.device, dtype=input.dtype
++        )
++    else:
++        assert buf.shape == (num_heads, total_q, out_len), (
++            f"buf shape mismatch: expected {(num_heads, total_q, out_len)}, got {tuple(buf.shape)}"
++        )
++        assert buf.dtype == input.dtype, (
++            f"buf dtype mismatch: expected {input.dtype}, got {buf.dtype}"
++        )
++        assert buf.device == input.device, (
++            f"buf device mismatch: expected {input.device}, got {buf.device}"
++        )
++        assert buf.is_contiguous(), "buf must be contiguous"
++        output = buf
+     with torch.cuda.device(input.device):
+         stream = torch.cuda.current_stream(input.device).cuda_stream
+         C.max_pooling_1d_varlen(
+@@ -120,6 +152,7 @@ def max_pooling_1d_varlen(
+             input.dtype == torch.bfloat16,
+             batch_size,
+             num_heads,
++            total_q,
+             max_seqlen_q,
+             max_seqlen_k,
+             out_len,
+@@ -130,9 +163,8 @@ def max_pooling_1d_varlen(
+             local_blocks,
+             init_blocks,
+         )
+-    
++
+     # Log device information before return
+-    #print(f"max_pooling_1d_varlen - input device: {input.device}, output device: {output.device}")
+-    
+-    return output
++    # print(f"max_pooling_1d_varlen - input device: {input.device}, output device: {output.device}")
+ 
++    return output
+diff --git a/infllm_v2/topk_to_uint64.py b/infllm_v2/topk_to_uint64.py
+index a509b25..2df033d 100644
+--- a/infllm_v2/topk_to_uint64.py
++++ b/infllm_v2/topk_to_uint64.py
+@@ -1,74 +1,121 @@
++# This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++# Copyright (c) OpenBMB.
++# Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++# SPDX-License-Identifier: Apache-2.0
++
+ import torch
+ from typing import Tuple, Optional
+ from . import C
+ 
+-def topk_to_uint64(topk_idx: torch.Tensor, max_seqlen_k: int, block_size: int, 
+-                   memory_buffer: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, int]:
+-    """
+-    Convert topk indices directly to uint64 representation without intermediate bool mask
+-    
+-    Args:
+-        topk_idx: Tensor of shape [batch, num_heads, total_seqlen, k] or [num_heads, total_seqlen, k]
+-                 containing block indices
+-        max_seqlen_k: Maximum sequence length for keys
+-        block_size: Size of each block
+-        memory_buffer: Optional pre-allocated buffer to reuse. If provided and has correct shape,
+-                      it will be used instead of allocating new memory.
+-        
+-    Returns:
+-        Tuple of:
+-            uint64_arrays: Tensor with the same batch dimensions but last dim replaced with uint64 values
+-            k_blocks: Number of key blocks
+-    """
++# torch.compile() support
++if torch.__version__ >= "2.4.0":
++    _torch_custom_op_wrapper = torch.library.custom_op
++    _torch_register_fake_wrapper = torch.library.register_fake
++else:
++    def noop_custom_op_wrapper(name, fn=None, /, *, mutates_args, device_types=None, schema=None):
++        def wrap(func):
++            return func
++        if fn is None:
++            return wrap
++        return fn
++    def noop_register_fake_wrapper(op, fn=None, /, *, lib=None, _stacklevel=1):
++        def wrap(func):
++            return func
++        if fn is None:
++            return wrap
++        return fn
++    _torch_custom_op_wrapper = noop_custom_op_wrapper
++    _torch_register_fake_wrapper = noop_register_fake_wrapper
++
++
++@_torch_custom_op_wrapper("infllmv2_attn::_topk_to_uint64", mutates_args=(), device_types="cuda")
++def _topk_to_uint64_inner(
++    topk_idx: torch.Tensor,
++    max_seqlen_k: int,
++    block_size: int,
++) -> torch.Tensor:
++    """Inner custom op for topk_to_uint64 - torch.compile compatible."""
+     assert topk_idx.dtype == torch.int32
+-    # Calculate key blocks
+-    k_blocks = (max_seqlen_k + block_size - 1) // block_size  # Ceiling division
++    k_blocks = (max_seqlen_k + block_size - 1) // block_size
+     
+-    # Record original shape
+     original_shape = topk_idx.shape
+-    
+-    # Check if we have a batch dimension
+     has_batch = len(original_shape) == 4
+     
+     if has_batch:
+         batch_size, num_heads, total_seqlen, k = original_shape
++        flat_dims = batch_size * num_heads * total_seqlen
++        output_shape = (batch_size, num_heads, total_seqlen, (k_blocks + 63) // 64)
+     else:
+         num_heads, total_seqlen, k = original_shape
+-        batch_size = 1
++        flat_dims = num_heads * total_seqlen
++        output_shape = (num_heads, total_seqlen, (k_blocks + 63) // 64)
+     
+-    # Compute how many uint64 values are needed per row
+     n_uint64_per_row = (k_blocks + 63) // 64
+-    # Flatten batch dimensions
+-    if has_batch:
+-        flat_dims = batch_size * num_heads * total_seqlen
+-        
+-        # Create output tensor
+-        output_shape = (batch_size, num_heads, total_seqlen, n_uint64_per_row)
+-    else:
+-        flat_dims = num_heads * total_seqlen
+-        
+-        # Create output tensor
+-        output_shape = (num_heads, total_seqlen, n_uint64_per_row)
+     
+-    # Check if we can reuse the provided memory buffer
+     with torch.cuda.device(topk_idx.device):
+         stream = torch.cuda.current_stream().cuda_stream
+         result = torch.zeros(output_shape, dtype=torch.int64, device=topk_idx.device)
+-    
+-        # Call CUDA kernel
++        
+         C.topk_to_uint64(
+             stream,
+             topk_idx.data_ptr(),
+             result.data_ptr(),
+             flat_dims,
+-            k,
++            original_shape[-1],  # k
+             k_blocks,
+             n_uint64_per_row
+         )
+     
+-    # Log device information before return
+-    #print(f"topk_to_uint64 - input device: {topk_idx.device}, output device: {result.device}")
++    return result
++
++
++@_torch_register_fake_wrapper("infllmv2_attn::_topk_to_uint64")
++def _topk_to_uint64_fake(
++    topk_idx: torch.Tensor,
++    max_seqlen_k: int,
++    block_size: int,
++) -> torch.Tensor:
++    """Fake implementation for torch.compile tracing."""
++    k_blocks = (max_seqlen_k + block_size - 1) // block_size
++    n_uint64_per_row = (k_blocks + 63) // 64
++    
++    original_shape = topk_idx.shape
++    has_batch = len(original_shape) == 4
+     
++    if has_batch:
++        output_shape = (original_shape[0], original_shape[1], original_shape[2], n_uint64_per_row)
++    else:
++        output_shape = (original_shape[0], original_shape[1], n_uint64_per_row)
++    
++    return torch.empty(output_shape, dtype=torch.int64, device=topk_idx.device)
++
++
++# Wrap for torch.compile compatibility
++if torch.__version__ >= "2.4.0":
++    _wrapped_topk_to_uint64 = torch.ops.infllmv2_attn._topk_to_uint64
++else:
++    _wrapped_topk_to_uint64 = _topk_to_uint64_inner
++
++
++def topk_to_uint64(topk_idx: torch.Tensor, max_seqlen_k: int, block_size: int, 
++                   memory_buffer: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, int]:
++    """
++    Convert topk indices directly to uint64 representation without intermediate bool mask
++    
++    Args:
++        topk_idx: Tensor of shape [batch, num_heads, total_seqlen, k] or [num_heads, total_seqlen, k]
++                 containing block indices
++        max_seqlen_k: Maximum sequence length for keys
++        block_size: Size of each block
++        memory_buffer: Optional pre-allocated buffer to reuse (ignored, kept for API compatibility)
++        
++    Returns:
++        Tuple of:
++            uint64_arrays: Tensor with the same batch dimensions but last dim replaced with uint64 values
++            k_blocks: Number of key blocks
++    """
++    k_blocks = (max_seqlen_k + block_size - 1) // block_size
++    result = _wrapped_topk_to_uint64(topk_idx, max_seqlen_k, block_size)
+     return result, k_blocks
+ 
+ 
+diff --git a/infllm_v2/uint64_to_bool.py b/infllm_v2/uint64_to_bool.py
+index 91a8839..27af637 100644
+--- a/infllm_v2/uint64_to_bool.py
++++ b/infllm_v2/uint64_to_bool.py
+@@ -1,3 +1,7 @@
++# This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++# Copyright (c) OpenBMB.
++# SPDX-License-Identifier: Apache-2.0
++
+ import torch
+ from typing import Tuple
+ from . import C
+diff --git a/setup.py b/setup.py
+index e66d970..cacbf94 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,3 +1,8 @@
++# This file is copied/adapted from infllmv2_cuda_impl (https://github.com/OpenBMB/infllmv2_cuda_impl).
++# Copyright (c) OpenBMB.
++# Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
++# SPDX-License-Identifier: Apache-2.0
++
+ import sys
+ import warnings
+ import os
+@@ -52,6 +57,65 @@ def append_nvcc_threads(nvcc_extra_args):
+     num_threads = min(multiprocessing.cpu_count(), 8)  # Use up to 8 threads
+     return nvcc_extra_args + ["--threads", str(num_threads)]
+ 
++
++def _normalize_cuda_arch(arch: str):
++    arch = arch.strip()
++    if not arch:
++        return None
++    emit_ptx = arch.endswith("+PTX")
++    if emit_ptx:
++        arch = arch[:-4]
++    arch_aliases = {
++        "8.0": "80",
++        "8.6": "86",
++        "8.9": "89",
++        "9.0": "90",
++        "10.0": "100",
++    }
++    arch_code = arch_aliases.get(arch, arch.replace(".", ""))
++    if not arch_code.isdigit():
++        return None
++    return arch_code, emit_ptx
++
++
++def _cuda_supports_arch(arch_code: str, cuda_version: Version) -> bool:
++    arch_num = int(arch_code)
++    if arch_num >= 100:
++        return cuda_version >= Version("12.8")
++    if arch_num >= 90:
++        return cuda_version >= Version("11.8")
++    return cuda_version >= Version("11.6")
++
++
++def get_cuda_arch_flags(cuda_version: Version):
++    env_arch_list = os.getenv("TORCH_CUDA_ARCH_LIST", "").strip()
++    if env_arch_list:
++        requested_arches = re.split(r"[; ]+", env_arch_list)
++    else:
++        requested_arches = ["8.0", "8.9", "9.0"]
++        if cuda_version >= Version("12.8"):
++            requested_arches.append("10.0")
++
++    cc_flag = []
++    seen = set()
++    for arch in requested_arches:
++        normalized = _normalize_cuda_arch(arch)
++        if normalized is None:
++            warnings.warn(f"Skipping unsupported CUDA arch entry: {arch}")
++            continue
++        arch_code, emit_ptx = normalized
++        if not _cuda_supports_arch(arch_code, cuda_version):
++            warnings.warn(
++                f"Skipping arch {arch_code}: nvcc {cuda_version} is too old for it."
++            )
++            continue
++        if arch_code not in seen:
++            cc_flag.extend(["-gencode", f"arch=compute_{arch_code},code=sm_{arch_code}"])
++            seen.add(arch_code)
++        if emit_ptx:
++            cc_flag.extend(["-gencode", f"arch=compute_{arch_code},code=compute_{arch_code}"])
++    return cc_flag
++
+ class NinjaBuildExtension(BuildExtension):
+     def __init__(self, *args, **kwargs) -> None:
+         # do not override env MAX_JOBS if already exists
+@@ -97,17 +161,8 @@ if not SKIP_CUDA_BUILD:
+                 "Note: make sure nvcc has a supported version by running nvcc -V."
+             )
+     
+-    # Auto-detect supported GPU archs based on CUDA toolkit version
+-    # 80: A100 (Ampere), 90: H100 (Hopper, CUDA 11.8+), 120: B100/B200 (Blackwell, CUDA 12.8+)
+-    supported_archs = ["80"]
+     if CUDA_HOME is not None:
+-        if bare_metal_version >= Version("11.8"):
+-            supported_archs.append("90")
+-        if bare_metal_version >= Version("12.8"):
+-            supported_archs.append("120")
+-
+-    for arch in supported_archs:
+-        cc_flag.extend(["-gencode", f"arch=compute_{arch},code=sm_{arch}"])
++        cc_flag.extend(get_cuda_arch_flags(bare_metal_version))
+ 
+     # HACK: The compiler flag -D_GLIBCXX_USE_CXX11_ABI is set to be the same as
+     # torch._C._GLIBCXX_USE_CXX11_ABI
+@@ -119,7 +174,7 @@ if not SKIP_CUDA_BUILD:
+                 # "csrc/flash_attn/src/flash_fwd_hdim32_fp16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim32_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim64_fp16_sm80.cu",
+-                "csrc/flash_attn/src/flash_fwd_hdim64_bf16_sm80.cu",
++                # "csrc/flash_attn/src/flash_fwd_hdim64_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim96_fp16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim96_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim128_fp16_sm80.cu",
+@@ -133,7 +188,7 @@ if not SKIP_CUDA_BUILD:
+                 # "csrc/flash_attn/src/flash_fwd_hdim32_fp16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim32_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim64_fp16_causal_sm80.cu",
+-                "csrc/flash_attn/src/flash_fwd_hdim64_bf16_causal_sm80.cu",
++                # "csrc/flash_attn/src/flash_fwd_hdim64_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim96_fp16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim96_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_hdim128_fp16_causal_sm80.cu",
+@@ -147,7 +202,7 @@ if not SKIP_CUDA_BUILD:
+                 # "csrc/flash_attn/src/flash_bwd_hdim32_fp16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim32_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim64_fp16_sm80.cu",
+-                "csrc/flash_attn/src/flash_bwd_hdim64_bf16_sm80.cu",
++                # "csrc/flash_attn/src/flash_bwd_hdim64_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim96_fp16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim96_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim128_fp16_sm80.cu",
+@@ -161,7 +216,7 @@ if not SKIP_CUDA_BUILD:
+                 # "csrc/flash_attn/src/flash_bwd_hdim32_fp16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim32_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim64_fp16_causal_sm80.cu",
+-                "csrc/flash_attn/src/flash_bwd_hdim64_bf16_causal_sm80.cu",
++                # "csrc/flash_attn/src/flash_bwd_hdim64_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim96_fp16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim96_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_bwd_hdim128_fp16_causal_sm80.cu",
+@@ -175,7 +230,7 @@ if not SKIP_CUDA_BUILD:
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_sm80.cu",
+-                "csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_sm80.cu",
++                # "csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_sm80.cu",
+@@ -189,7 +244,7 @@ if not SKIP_CUDA_BUILD:
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim32_fp16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim32_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim64_fp16_causal_sm80.cu",
+-                "csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_causal_sm80.cu",
++                # "csrc/flash_attn/src/flash_fwd_split_hdim64_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim96_fp16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim96_bf16_causal_sm80.cu",
+                 # "csrc/flash_attn/src/flash_fwd_split_hdim128_fp16_causal_sm80.cu",
+@@ -252,15 +307,13 @@ if not SKIP_CUDA_BUILD:
+ 
+ setup(
+     name='infllm_v2',
+-    version='0.0.0',
+-    author_email="acha131441373@gmail.com",
++    version='0.128',
+     description="infllm_v2 cuda implementation with flash attention and cutlass",
+     packages=find_packages(),
+     ext_modules=ext_modules,
+     cmdclass={"build_ext": NinjaBuildExtension} if ext_modules else {},
+     python_requires=">=3.7",
+     install_requires=[
+-        "torch",
+         "packaging",
+         "psutil",
+     ],

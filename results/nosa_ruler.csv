@@ -1,0 +1,6 @@
+method,ruler_32k
+Dense,85.99
+InfiniGen,61.79
+Native sparse,72.42
+SparDA,71.96
+LeanSelect,73.87

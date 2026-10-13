@@ -1,0 +1,86 @@
+[
+  {
+    "batch_size": 1,
+    "length": 32768,
+    "times_s": {
+      "LeanSelect": {
+        "decode_time": 0.17313684844970703,
+        "prefill_time": 1.7421693725585938,
+        "wall_time_s": 1.9181121587753296
+      },
+      "Native sparse": {
+        "decode_time": 0.17288294219970704,
+        "prefill_time": 1.9036542358398436,
+        "wall_time_s": 2.077349305152893
+      },
+      "Uniform": {
+        "decode_time": 0.1704168014526367,
+        "prefill_time": 1.7583892211914063,
+        "wall_time_s": 1.9286545515060425
+      }
+    }
+  },
+  {
+    "batch_size": 4,
+    "length": 32768,
+    "times_s": {
+      "LeanSelect": {
+        "decode_time": 0.1979968490600586,
+        "prefill_time": 6.95233203125,
+        "wall_time_s": 7.16105329990387
+      },
+      "Native sparse": {
+        "decode_time": 0.19817752075195313,
+        "prefill_time": 7.5837353515625,
+        "wall_time_s": 7.784030556678772
+      },
+      "Uniform": {
+        "decode_time": 0.19717071533203126,
+        "prefill_time": 7.0392177734375,
+        "wall_time_s": 7.236091732978821
+      }
+    }
+  },
+  {
+    "batch_size": 1,
+    "length": 131072,
+    "times_s": {
+      "LeanSelect": {
+        "decode_time": 0.22099353790283202,
+        "prefill_time": 8.008305908203125,
+        "wall_time_s": 8.233612179756165
+      },
+      "Native sparse": {
+        "decode_time": 0.2211633758544922,
+        "prefill_time": 9.875880859375,
+        "wall_time_s": 10.098381876945496
+      },
+      "Uniform": {
+        "decode_time": 0.21455677032470705,
+        "prefill_time": 8.458750976562499,
+        "wall_time_s": 8.674748182296753
+      }
+    }
+  },
+  {
+    "batch_size": 4,
+    "length": 131072,
+    "times_s": {
+      "LeanSelect": {
+        "decode_time": 0.3347856750488281,
+        "prefill_time": 31.796522460937503,
+        "wall_time_s": 32.1301771402359
+      },
+      "Native sparse": {
+        "decode_time": 0.3384971466064453,
+        "prefill_time": 39.87977734375,
+        "wall_time_s": 40.22707533836365
+      },
+      "Uniform": {
+        "decode_time": 0.33746562194824214,
+        "prefill_time": 34.46920703125,
+        "wall_time_s": 34.81485033035278
+      }
+    }
+  }
+]

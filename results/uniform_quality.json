@@ -1,0 +1,26 @@
+[
+  {
+    "length": 32768,
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 20261007,
+    "ci_high": 2.4256410256410255,
+    "ci_low": -0.7609294871794872,
+    "delta_points": 0.823076923076923,
+    "interval": "individual task-stratified percentile; no multiplicity correction",
+    "paired_examples": 600,
+    "reference": "UniformMean",
+    "strata": 13
+  },
+  {
+    "length": 131072,
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 20261007,
+    "ci_high": 6.5616025641025635,
+    "ci_low": 2.42051282051282,
+    "delta_points": 4.464102564102564,
+    "interval": "individual task-stratified percentile; no multiplicity correction",
+    "paired_examples": 650,
+    "reference": "UniformMean",
+    "strata": 13
+  }
+]

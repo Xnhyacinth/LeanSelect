@@ -1,0 +1,170 @@
+[
+  {
+    "datasets": [
+      {
+        "correct": 365,
+        "dataset": "math-500",
+        "examples": 500,
+        "score": 73.0
+      },
+      {
+        "correct": 23,
+        "dataset": "aime24",
+        "examples": 30,
+        "score": 76.66666666666667
+      },
+      {
+        "correct": 23,
+        "dataset": "aime25",
+        "examples": 30,
+        "score": 76.66666666666667
+      }
+    ],
+    "macro": 75.44444444444444,
+    "method": "Dense"
+  },
+  {
+    "datasets": [
+      {
+        "correct": 369,
+        "dataset": "math-500",
+        "examples": 500,
+        "score": 73.8
+      },
+      {
+        "correct": 22,
+        "dataset": "aime24",
+        "examples": 30,
+        "score": 73.33333333333333
+      },
+      {
+        "correct": 21,
+        "dataset": "aime25",
+        "examples": 30,
+        "score": 70.0
+      }
+    ],
+    "macro": 72.37777777777778,
+    "method": "Native sparse"
+  },
+  {
+    "datasets": [
+      {
+        "correct": 369,
+        "dataset": "math-500",
+        "examples": 500,
+        "score": 73.8
+      },
+      {
+        "correct": 24,
+        "dataset": "aime24",
+        "examples": 30,
+        "score": 80.0
+      },
+      {
+        "correct": 19,
+        "dataset": "aime25",
+        "examples": 30,
+        "score": 63.333333333333336
+      }
+    ],
+    "macro": 72.37777777777778,
+    "method": "SparDA"
+  },
+  {
+    "datasets": [
+      {
+        "correct": 366,
+        "dataset": "math-500",
+        "examples": 500,
+        "score": 73.2
+      },
+      {
+        "correct": 23,
+        "dataset": "aime24",
+        "examples": 30,
+        "score": 76.66666666666667
+      },
+      {
+        "correct": 24,
+        "dataset": "aime25",
+        "examples": 30,
+        "score": 80.0
+      }
+    ],
+    "macro": 76.62222222222222,
+    "method": "LeanSelect"
+  },
+  {
+    "datasets": [
+      {
+        "correct": 365,
+        "dataset": "math-500",
+        "examples": 500,
+        "score": 73.0
+      },
+      {
+        "correct": 23,
+        "dataset": "aime24",
+        "examples": 30,
+        "score": 76.66666666666667
+      },
+      {
+        "correct": 24,
+        "dataset": "aime25",
+        "examples": 30,
+        "score": 80.0
+      }
+    ],
+    "macro": 76.55555555555556,
+    "method": "MInference scoring"
+  },
+  {
+    "datasets": [
+      {
+        "correct": 366,
+        "dataset": "math-500",
+        "examples": 500,
+        "score": 73.2
+      },
+      {
+        "correct": 22,
+        "dataset": "aime24",
+        "examples": 30,
+        "score": 73.33333333333333
+      },
+      {
+        "correct": 20,
+        "dataset": "aime25",
+        "examples": 30,
+        "score": 66.66666666666667
+      }
+    ],
+    "macro": 71.06666666666666,
+    "method": "XAttention scoring"
+  },
+  {
+    "datasets": [
+      {
+        "correct": 372,
+        "dataset": "math-500",
+        "examples": 500,
+        "score": 74.4
+      },
+      {
+        "correct": 24,
+        "dataset": "aime24",
+        "examples": 30,
+        "score": 80.0
+      },
+      {
+        "correct": 23,
+        "dataset": "aime25",
+        "examples": 30,
+        "score": 76.66666666666667
+      }
+    ],
+    "macro": 77.02222222222223,
+    "method": "Recency"
+  }
+]

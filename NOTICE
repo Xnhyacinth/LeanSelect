@@ -1,0 +1,22 @@
+LeanSelect
+
+This implementation is derived in part from SparDA
+(https://github.com/Xnhyacinth/sparda), Copyright 2026 NVIDIA, Apache-2.0.
+The extraction retains the Paper1 selector, its objective, relevant backbone
+paths and baseline adapters. Public names and entry points have been revised.
+
+Backbone and baseline code retains contributions from OpenBMB, NVIDIA,
+Hugging Face, EleutherAI, THUNLP/NOSA and the InfiniGen authors. Original
+copyright notices remain in source files. NOSA-derived files carry MIT terms
+as well as the terms attached to their incorporated Apache-2.0 code.
+
+The native extension uses OpenBMB/infllmv2_cuda_impl, with FlashAttention
+BSD-3-Clause portions and NVIDIA CUTLASS dependencies. Fixed revisions and
+the local patch are recorded under third_party/infllmv2/.
+
+LongBench, RULER, HELMET and NOSA reasoning interfaces use separately obtained
+upstream code and data. Their revisions are recorded in leanselect/evaluate.py.
+Their respective licenses continue to apply. This repository does not bundle
+benchmark datasets, model weights, or upstream repository histories.
+
+Applicable third-party license texts and source URLs are included in LICENSE.

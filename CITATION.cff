@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "Please cite this software if you use the LeanSelect implementation."
+title: "LeanSelect: Efficient Long-Context Prefill with Lightweight Selection"
+type: software
+authors:
+  - name: "LeanSelect contributors"
+version: 0.1.0
+license: Apache-2.0
+repository-code: "https://github.com/Xnhyacinth/LeanSelect"

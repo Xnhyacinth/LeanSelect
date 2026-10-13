@@ -1,0 +1,20 @@
+{
+  "kernel_size": 32,
+  "kernel_stride": 16,
+  "block_size": 64,
+  "init_blocks": 1,
+  "window_size": 2048,
+  "topk": 64,
+  "dense_len": -1,
+  "leanselect_router_heads": 4,
+  "leanselect_router_dim": 32,
+  "leanselect_total_topk_blocks": 96,
+  "leanselect_supervision_rows": 64,
+  "leanselect_worst_group_weight": 0.1,
+  "training_kernel_size": 2,
+  "training_kernel_stride": 1,
+  "listwise_weight": 1.0,
+  "boundary_weight": 0.1,
+  "loss_temperature": 1.0,
+  "boundary_margin": 0.1
+}

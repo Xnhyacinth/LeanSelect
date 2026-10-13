@@ -1,0 +1,228 @@
+{
+  "model": "NOSA-8B",
+  "input_max_length": 32768,
+  "longbench": [
+    {
+      "examples": 3050,
+      "macro": 42.191428571428574,
+      "method": "Native sparse",
+      "task_scores": {
+        "2wikimqa": 36.58,
+        "gov_report": 33.33,
+        "hotpotqa": 48.59,
+        "multifieldqa_en": 51.53,
+        "musique": 23.37,
+        "narrativeqa": 21.96,
+        "passage_count": 4.0,
+        "passage_retrieval_en": 92.5,
+        "qasper": 34.43,
+        "qmsum": 24.88,
+        "repobench-p": 51.55,
+        "samsum": 5.74,
+        "trec": 74.0,
+        "triviaqa": 88.22
+      },
+      "tasks": 14
+    },
+    {
+      "examples": 3050,
+      "macro": 41.77142857142857,
+      "method": "SparDA",
+      "task_scores": {
+        "2wikimqa": 36.18,
+        "gov_report": 33.19,
+        "hotpotqa": 47.56,
+        "multifieldqa_en": 51.74,
+        "musique": 23.89,
+        "narrativeqa": 22.12,
+        "passage_count": 3.0,
+        "passage_retrieval_en": 89.5,
+        "qasper": 33.94,
+        "qmsum": 24.58,
+        "repobench-p": 51.36,
+        "samsum": 5.7,
+        "trec": 74.5,
+        "triviaqa": 87.54
+      },
+      "tasks": 14
+    },
+    {
+      "examples": 3050,
+      "macro": 41.98571428571429,
+      "method": "LeanSelect",
+      "task_scores": {
+        "2wikimqa": 37.14,
+        "gov_report": 32.84,
+        "hotpotqa": 48.29,
+        "multifieldqa_en": 50.93,
+        "musique": 24.68,
+        "narrativeqa": 21.68,
+        "passage_count": 3.5,
+        "passage_retrieval_en": 91.5,
+        "qasper": 33.98,
+        "qmsum": 24.64,
+        "repobench-p": 51.07,
+        "samsum": 6.01,
+        "trec": 74.5,
+        "triviaqa": 87.04
+      },
+      "tasks": 14
+    }
+  ],
+  "helmet": [
+    {
+      "categories": {
+        "icl": 67.56,
+        "rag": 48.79166666666667,
+        "recall": 46.125
+      },
+      "method": "SparDA",
+      "requests": 5000,
+      "task_scores": {
+        "icl_banking77_1450shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 73.0
+        },
+        "icl_clinic150_1750shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 86.8
+        },
+        "icl_nlu_2040shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 78.4
+        },
+        "icl_trec_coarse_1600shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 76.8
+        },
+        "icl_trec_fine_1600shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 22.8
+        },
+        "json_kv": {
+          "category": "recall",
+          "requests": 100,
+          "score": 50.0
+        },
+        "kilt_hotpotqa": {
+          "category": "rag",
+          "requests": 300,
+          "score": 44.666666666666664
+        },
+        "kilt_nq": {
+          "category": "rag",
+          "requests": 600,
+          "score": 43.166666666666664
+        },
+        "kilt_popqa_3": {
+          "category": "rag",
+          "requests": 600,
+          "score": 34.66666666666667
+        },
+        "kilt_triviaqa": {
+          "category": "rag",
+          "requests": 600,
+          "score": 72.66666666666667
+        },
+        "ruler_niah_mk_2": {
+          "category": "recall",
+          "requests": 100,
+          "score": 31.0
+        },
+        "ruler_niah_mk_3": {
+          "category": "recall",
+          "requests": 100,
+          "score": 20.0
+        },
+        "ruler_niah_mv": {
+          "category": "recall",
+          "requests": 100,
+          "score": 83.5
+        }
+      },
+      "tasks": 13
+    },
+    {
+      "categories": {
+        "icl": 68.84,
+        "rag": 47.166666666666664,
+        "recall": 44.9375
+      },
+      "method": "LeanSelect",
+      "requests": 5000,
+      "task_scores": {
+        "icl_banking77_1450shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 77.2
+        },
+        "icl_clinic150_1750shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 87.0
+        },
+        "icl_nlu_2040shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 79.80000000000001
+        },
+        "icl_trec_coarse_1600shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 75.8
+        },
+        "icl_trec_fine_1600shot_balance": {
+          "category": "icl",
+          "requests": 500,
+          "score": 24.4
+        },
+        "json_kv": {
+          "category": "recall",
+          "requests": 100,
+          "score": 48.0
+        },
+        "kilt_hotpotqa": {
+          "category": "rag",
+          "requests": 300,
+          "score": 44.0
+        },
+        "kilt_nq": {
+          "category": "rag",
+          "requests": 600,
+          "score": 40.0
+        },
+        "kilt_popqa_3": {
+          "category": "rag",
+          "requests": 600,
+          "score": 34.166666666666664
+        },
+        "kilt_triviaqa": {
+          "category": "rag",
+          "requests": 600,
+          "score": 70.5
+        },
+        "ruler_niah_mk_2": {
+          "category": "recall",
+          "requests": 100,
+          "score": 34.0
+        },
+        "ruler_niah_mk_3": {
+          "category": "recall",
+          "requests": 100,
+          "score": 19.0
+        },
+        "ruler_niah_mv": {
+          "category": "recall",
+          "requests": 100,
+          "score": 78.75
+        }
+      },
+      "tasks": 13
+    }
+  ]
+}
