@@ -183,6 +183,8 @@ def parser():
     p.add_argument('--output', required=True)
     p.add_argument('--config', required=True, help='LeanSelect sparse configuration JSON')
     p.add_argument('--ablation-config', help='JSON overrides from configs/ablations')
+    p.add_argument('--training-kernel-size', type=int, help='teacher kernel size; requires --training-kernel-stride')
+    p.add_argument('--training-kernel-stride', type=int, help='teacher stride; requires --training-kernel-size')
     p.add_argument('--export-initial-selector', action='store_true',
                    help='also save selector-000000.pt before the first optimizer update')
     p.add_argument('--resume', help='training.pt checkpoint; not a deployment checkpoint')
@@ -205,6 +207,10 @@ def main():
     if min(args.sequence_length, args.batch_size, args.gradient_accumulation,
            args.steps, args.save_every) <= 0 or args.learning_rate <= 0:
         raise ValueError('training sizes and learning rate must be positive')
+    teacher = (args.training_kernel_size, args.training_kernel_stride)
+    if any(value is not None for value in teacher):
+        if any(value is None or value <= 0 for value in teacher):
+            raise ValueError('teacher kernel size and stride must both be positive')
     if not torch.cuda.is_available():
         raise RuntimeError('the sparse training kernels require CUDA')
     rank, world = int(os.environ.get('RANK', 0)), int(os.environ.get('WORLD_SIZE', 1))
@@ -218,6 +224,9 @@ def main():
         config = ablation_config(json.loads(Path(args.config).read_text()),
                                  json.loads(Path(args.ablation_config).read_text())
                                  if args.ablation_config else {})
+        if args.training_kernel_size is not None:
+            config.update(training_kernel_size=args.training_kernel_size,
+                          training_kernel_stride=args.training_kernel_stride)
         dataset = TokenDataset(args.data, args.sequence_length)
         from .checkpoints import base_model_weights_manifest_sha256
         contract = {k: v for k, v in vars(args).items()

@@ -1,8 +1,8 @@
 # Release validation
 
-The current implementation passes 64 CPU tests covering the selector,
+The current implementation passes 74 CPU tests covering the selector,
 checkpoint compatibility, training, scoring, cached generation, LongBench v2
-protocol/resume behavior and ablation controls. The wheel and source
+protocol/resume behavior, ablation controls and the twelve-run training plan. The wheel and source
 distribution build successfully; the source distribution includes the ablation
 configurations and benchmark documentation.
 
