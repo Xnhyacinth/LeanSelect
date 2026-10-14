@@ -30,6 +30,10 @@ uv run --no-sync pytest
 
 See [reproduction.md](docs/reproduction.md) for four-GPU training, development-set checkpoint selection, benchmark preparation, and timing commands.
 
+[LongBench v2](docs/longbench_v2.md) provides pinned direct 0-shot generation
+with resumable evaluation. [Training ablations](docs/ablations.md) documents
+the shared configurations for direct-width, fixed-mixing, and loss controls.
+
 [Results](results/README.md) lists the exported paper results and their coverage. [Validation](docs/validation.md) records the checks performed on this implementation.
 
 | Method (`--method`) | MiniCPM4.1 | NOSA | Additional weights |

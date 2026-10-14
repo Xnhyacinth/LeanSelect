@@ -1,10 +1,18 @@
 # Release validation
 
-The extracted implementation passes 48 CPU tests covering the selector,
-checkpoint compatibility, training, scoring, cached generation and evaluation
-contracts.
+The current implementation passes 64 CPU tests covering the selector,
+checkpoint compatibility, training, scoring, cached generation, LongBench v2
+protocol/resume behavior and ablation controls. The wheel and source
+distribution build successfully; the source distribution includes the ablation
+configurations and benchmark documentation.
 
-Fourteen CUDA checks passed on two H200 GPUs, one test process per GPU, using
+The LongBench v2 extraction was checked against the pinned upstream sources
+and official aggregation code. The new benchmark and ablation entry points
+have not yet been run as full GPU experiments. Use the project's own PyTorch
+libraries when testing; a host `LD_LIBRARY_PATH` that places another PyTorch
+installation first can load incompatible native libraries.
+
+The initial release's fourteen CUDA checks passed on two H200 GPUs, one test process per GPU, using
 real 16,384-token inputs and four generated tokens:
 
 - MiniCPM: Dense, native sparse, SparDA, InfiniGen, Uniform, MInference,

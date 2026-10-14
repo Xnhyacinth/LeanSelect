@@ -50,12 +50,32 @@ def selectors(model):
     return found
 
 
-def freeze_backbone(model):
+def freeze_backbone(model, *, freeze_mixing=False):
     model.requires_grad_(False)
     modules = selectors(model)
     for module in modules.values():
         module.float().requires_grad_(True)
-    return [parameter for module in modules.values() for parameter in module.parameters()]
+        if freeze_mixing:
+            module.head_mix.requires_grad_(False)
+            module.kv_head_mix.requires_grad_(False)
+    return [parameter for module in modules.values() for parameter in module.parameters()
+            if parameter.requires_grad]
+
+
+def ablation_config(config, overrides):
+    """Apply a small ablation patch while keeping the backbone configuration shared."""
+    allowed = {'leanselect_router_heads', 'leanselect_router_dim',
+               'leanselect_freeze_mixing', 'boundary_weight',
+               'leanselect_worst_group_weight'}
+    if not isinstance(config, dict) or not isinstance(overrides, dict):
+        raise ValueError('base and ablation configurations must be JSON objects')
+    unknown = set(overrides) - allowed
+    if unknown:
+        raise ValueError(f'unsupported ablation settings: {sorted(unknown)}')
+    result = {**config, **overrides}
+    if not isinstance(result.get('leanselect_freeze_mixing', False), bool):
+        raise ValueError('leanselect_freeze_mixing must be a boolean')
+    return result
 
 
 def layerwise_backward(model, input_ids, backbone, accumulation):
@@ -162,6 +182,9 @@ def parser():
     p.add_argument('--data', required=True, help='pretokenized JSONL or saved Dataset')
     p.add_argument('--output', required=True)
     p.add_argument('--config', required=True, help='LeanSelect sparse configuration JSON')
+    p.add_argument('--ablation-config', help='JSON overrides from configs/ablations')
+    p.add_argument('--export-initial-selector', action='store_true',
+                   help='also save selector-000000.pt before the first optimizer update')
     p.add_argument('--resume', help='training.pt checkpoint; not a deployment checkpoint')
     p.add_argument('--sequence-length', type=int, default=65536)
     p.add_argument('--batch-size', type=int, default=8, help='per rank')
@@ -177,6 +200,8 @@ def parser():
 
 def main():
     args = parser().parse_args()
+    if args.resume and args.export_initial_selector:
+        raise ValueError('initial selector export requires a fresh training run')
     if min(args.sequence_length, args.batch_size, args.gradient_accumulation,
            args.steps, args.save_every) <= 0 or args.learning_rate <= 0:
         raise ValueError('training sizes and learning rate must be positive')
@@ -190,11 +215,14 @@ def main():
     try:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
-        config = json.loads(Path(args.config).read_text())
+        config = ablation_config(json.loads(Path(args.config).read_text()),
+                                 json.loads(Path(args.ablation_config).read_text())
+                                 if args.ablation_config else {})
         dataset = TokenDataset(args.data, args.sequence_length)
         from .checkpoints import base_model_weights_manifest_sha256
         contract = {k: v for k, v in vars(args).items()
-                    if k not in {'output', 'resume', 'steps', 'save_every', 'config', 'model', 'data'}}
+                    if k not in {'output', 'resume', 'steps', 'save_every', 'config',
+                                 'ablation_config', 'export_initial_selector', 'model', 'data'}}
         contract.update(config=config, world_size=world, data_sha256=dataset.identity,
                         optimizer={'name': 'AdamW', 'betas': [0.9, 0.95], 'eps': 1e-6},
                         source_sha256=source_sha256(),
@@ -205,7 +233,7 @@ def main():
         from .models import load_model
         model, _ = load_model(args.backbone, args.model, method='leanselect',
                               device=f'cuda:{local_rank}', sparse_config=config, training=True)
-        parameters = freeze_backbone(model)
+        parameters = freeze_backbone(model, freeze_mixing=config.get('leanselect_freeze_mixing', False))
         optimizer = torch.optim.AdamW(parameters, lr=args.learning_rate, weight_decay=args.weight_decay,
                                       betas=(0.9, 0.95), eps=1e-6)
         model.train()
@@ -220,6 +248,8 @@ def main():
         output.mkdir(parents=True, exist_ok=True)
         if rank == 0:
             (output / 'config.json').write_text(json.dumps(contract, indent=2) + '\n')
+            if args.export_initial_selector:
+                export_selector(model, output / 'selector-000000.pt')
         while step < args.steps:
             optimizer.zero_grad(set_to_none=True)
             loss = 0.0
